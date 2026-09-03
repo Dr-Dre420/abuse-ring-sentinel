@@ -98,7 +98,7 @@ A primary finding of the P1.7 audit was resolving a zero-second lookahead bug in
 - **Pre-Event Feature Computation**: For any transaction at timestamp $t$, graph features are computed from the historical graph state **before** the transaction's edges are committed to the graph. This guarantees that customer degree and local density are purely historical pre-event properties.
 - **Incremental Sliding Window**: Transactions outside $[t - 24\text{h}, t]$ are evicted from the active `networkx` graph using a streaming FIFO queue (`collections.deque`).
 - **Timestamp Tie-Breaker**: Simultaneous transactions at identical second timestamps are ordered deterministically by arrival order, simulating a real-time event-streaming message bus.
-- **Zero Future Contamination**: Rolling state does not leak from test to train. All 8 temporal regression tests in `tests/test_graph.py` confirm zero temporal leakage.
+- **Zero Future Contamination**: Rolling state does not leak from test to train. Dedicated temporal regression tests in `tests/test_graph.py` confirm zero temporal leakage across streaming sliding windows and tie-breaking.
 
 ---
 
@@ -190,6 +190,9 @@ python -m venv venv
 
 # 3. Install frozen dependencies
 pip install -r requirements.txt
+
+# 4. Run automated test suite (20 tests passing)
+pytest
 ```
 
 ---
@@ -252,19 +255,25 @@ curl -X POST http://localhost:8000/score/batch \
 - **Concept**: Abuse-Ring Sentinel pairs high-velocity temporal behavioral modeling with a streaming 24h causal bipartite graph (Customers $\leftrightarrow$ Devices, Payment Credentials, Merchants).
 
 ### 1:15 – 2:30: Case Investigator — Coordinated Abuse Ring (Case A)
-- **Action**: In the dashboard, click **CASE A: T57997**.
+- **Action**: In the dashboard, click **Case A • Coordinated Burst (T57997)**.
 - **Demonstration**:
-  - Model B score is **0.9997** (Threshold: 0.1519).
-  - Deterministic Explainability highlights **Severe Device Multiplexing (28 accounts on 1 device)** and **Critical Merchant Surge**.
-  - Interactive Canvas renders the dense ego-network with shared devices and payment instruments highlighted in red.
-  - Policy triggers **ESCALATE FOR ANALYST AUTHORIZATION** (routes to human Tier-2 specialist; no financial action is executed automatically).
+  - **Case Context Strip**: Shows transaction telemetry, ₹1,240.00 amount, and entity chips (Customer C610, Merchant M84, Device D97, Payment Method P812).
+  - **Dual Model Inference**: Both models agree on high risk — Model C score is **1.0000** (Threshold: 0.2383) and Model B score is **1.0000** (Threshold: 0.1519).
+  - **Relational Context Impact**: Confirms *Coordinated Abuse Indicated (High Confidence)* based on interlocked multi-account device multiplexing.
+  - **Split Evidence**: Highlights **Critical Merchant Surge** (52 txns/hr vs < 5 baseline) alongside **Severe Device Multiplexing** (28 accounts on 1 device).
+  - **Static Investigation Timeline**: Traces the 24-hour pre-event trajectory from $T - 24\text{h}$ baseline through $T - 1\text{h}$ surge to $T0$ evaluation.
+  - **Interactive Canvas**: Renders the causal ego-network with shared devices and payment instruments highlighted in red, with spring physics settling cleanly to rest.
+  - **Defensive Policy**: Policy triggers **ESCALATE FOR ANALYST AUTHORIZATION** (routes to human Tier-2 specialist; no financial action is executed automatically).
+  - **Action Log**: Click *Escalate for Authorization* — Action Log records disposition as *Awaiting human authorization* in the local session audit trail.
 
 ### 2:30 – 3:15: Case Investigator — Legitimate Flash Sale (Case C)
-- **Action**: Switch to **CASE C: T60698**.
-- **The "Aha!" Moment**:
-  - Model C (Temporal-Only) panicked and falsely flagged this transaction (**0.2857** > threshold 0.1450) due to holiday merchant velocity. Operating thresholds were independently selected on validation.
-  - Model B incorporated relational context: the customer had **0 shared devices and 0 shared PMs**, bringing the score down to **0.1178** (< threshold 0.1519).
-  - Policy triggers **MONITOR**, preventing merchant churn and eliminating user friction.
+- **Action**: Switch to **Case C • Seasonal Volume Burst (T60698)**.
+- **The "Aha!" Moment (Model Disagreement)**:
+  - **Temporal Control Flagged**: Model C (Temporal-Only) tripped its velocity filter and falsely flagged this transaction (**0.2857** > operating threshold 0.2383) due to high holiday merchant velocity.
+  - **Relational Context Cleared**: Model B incorporated 24-hour relational topology: the customer had **0 shared devices, 0 shared payment methods, and 1 isolated merchant connection**, suppressing the risk score to **0.1178** (< operating threshold 0.1519).
+  - **Relational Context Impact Callout**: Prominently highlights *Lower Risk Under Relational Context (Score Delta: -0.1679)*, explaining the dispersed organic footprint.
+  - **Defensive Policy**: Policy recommends **MONITOR**, preventing merchant churn and eliminating user friction.
+  - **Action Log**: Click *Monitor* in the Analyst Recommendation Queue — Action Log updates to *Logged to telemetry (Continuous monitoring)* with zero financial impact executed automatically.
 
 ### 3:15 – 4:15: Model Evaluation View
 - **Action**: Click the **Model Evaluation** tab.
