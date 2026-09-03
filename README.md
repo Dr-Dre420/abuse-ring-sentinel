@@ -24,24 +24,38 @@ Abuse-Ring Sentinel is structured as an **AI-assisted payment risk investigation
 
 ### Investigation Showcase
 
-#### 1. Model Disagreement & False-Positive Suppression (Case C)
+#### 1. Cases Overview
+![Cases Overview](assets/screenshots/cases_overview.png)
+
+> **Cases Overview**: Curated investigation scenarios categorized by risk profile (`coordinated_burst`, `merchant_ring`, `seasonal_burst`), presenting live agreement/disagreement indicators, velocity metrics, and the prominent **51.9% Seasonal-Burst False-Positive Reduction** finding without requiring deep navigation.
+
+---
+
+#### 2. Model Disagreement & False-Positive Suppression (Case C)
 ![Model Disagreement & Investigation Workspace](assets/screenshots/case_c_disagreement.png)
 
 > **Model Disagreement Analysis (Case C / T60698)**: The temporal baseline flags high holiday surge volume (Model C: `0.2857` vs. threshold `0.2383`), while the 24-hour causal relational graph verifies an isolated, organic footprint (0 shared payment methods, 1 shared device), reducing the risk assessment (Model B: `0.1178` vs. threshold `0.1519`, $\Delta = -0.1679$). The system recommends **Monitor** with zero financial disruption.
 
 ---
 
-#### 2. Coordinated Abuse Ring Consensus (Case A)
+#### 3. Interactive 3D Causal Ego-Network
+![Interactive 3D Causal Ego-Network](assets/screenshots/3d_causal_ego_network.png)
+
+> **Interactive 3D Causal Ego-Network & Entity Inspector**: Real-time WebGL projection of the 24-hour pre-event bipartite network $[t - 24\text{h}, t)$ with zero lookahead. Analysts can rotate, zoom, center on the focal customer (`Focus Focal`), and inspect entity connectivity degrees and infrastructure multiplexing.
+
+---
+
+#### 4. Coordinated Abuse Ring Consensus (Case A)
 ![Coordinated Abuse Investigation](assets/screenshots/case_a_investigation.png)
 
 > **Model Agreement Analysis (Case A / T57997)**: Both models flag high risk (`1.0000` probability) when single-account velocity ($52\text{ txns/hr}$) is reinforced by multiplexed physical infrastructure ($28\text{ accounts}$ recycled on device `D97`). The system routes the case to **Escalate for Analyst Authorization** for human settlement hold approval.
 
 ---
 
-#### 3. Model Evaluation & Multi-Seed Benchmark
+#### 5. Model Evaluation & Multi-Seed Benchmark
 ![Model Evaluation Dashboard](assets/screenshots/model_evaluation.png)
 
-> **Controlled Model Evaluation**: Direct side-by-side comparison of Model C (Temporal Control) vs. Model B (Temporal + Graph), displaying held-out confusion matrices, multi-seed sensitivity analysis across Seeds 42, 100, and 999, and the Precision-Recall curve canvas.
+> **Controlled Model Evaluation**: Direct side-by-side comparison of Model C (Temporal Control) vs. Model B (Temporal + Graph), displaying rendered Precision-Recall curves, held-out confusion matrices, multi-seed sensitivity analysis across Seeds 42, 100, and 999, and XGBoost feature importance attribution.
 
 ---
 
@@ -440,7 +454,9 @@ abuse-ring-sentinel/
 │   ├── evaluation/                # Frozen metrics, static payloads & audit reports
 │   └── models/                    # Trained XGBoost models & validation thresholds
 ├── assets/
-│   └── screenshots/               # Dashboard screenshots for repository showcase
+│   └── screenshots/               # High-resolution screenshots of final UI/UX
+│       ├── 3d_causal_ego_network.png
+│       ├── cases_overview.png
 │       ├── case_a_investigation.png
 │       ├── case_c_disagreement.png
 │       └── model_evaluation.png
