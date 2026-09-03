@@ -110,7 +110,7 @@ Five causal graph features are extracted for each event:
 2. `shared_device_customers_24h`: Count of distinct *other* customer accounts that operated on the transaction's device within 24h.
 3. `shared_pm_customers_24h`: Count of distinct *other* customer accounts that transacted with the transaction's payment credential within 24h.
 4. `two_hop_customer_count_24h`: Number of other customers reachable in exactly 2 bipartite hops ($C \to \{D, P, M\} \to C'$).
-5. `local_cluster_density_24h`: Bipartite edge density between the customer's 2-hop customer neighborhood ($C_{set} = \{c\} \cup \text{two\_hop\_customers}$) and associated entities ($E_{set}$). Formally, $\text{density} = \text{actual\_edges} / (|C_{set}| \times |E_{set}|)$.
+5. `local_cluster_density_24h`: Bipartite edge density between the customer's 2-hop customer neighborhood ($C_{\text{set}} = \{c\} \cup C_{\text{2-hop}}$) and associated entities ($E_{\text{set}}$). Formally, $\text{density} = \text{actual_edges} \div (|C_{\text{set}}| \times |E_{\text{set}}|)$.
    - **Why correlation with abuse is negative (-0.1614)**: In legitimate seasonal bursts and ambient traffic, organic shoppers interact across popular merchants and common devices/platforms, creating a dense bipartite mesh of natural cross-links. Conversely, synthetic abuse bursts connect narrow merchant targets with synthetic accounts whose bipartite neighborhoods have high potential pairings but low mutual cross-links.
    - **Why higher density should NOT automatically indicate higher risk**: Dense bipartite connectivity frequently reflects benign merchant popularity and natural customer overlap across common checkout channels, rather than collusive ring activity.
 
@@ -149,7 +149,7 @@ To confirm results are not artifacts of a single favorable random seed, the iden
 ---
 
 ## 10. False-Positive Cost & Scenario Breakdown
-Cost model assumption: $C_{FP} = \$10$ (analyst verification & merchant friction), $C_{FN} = \$500$ (chargeback loss and merchant fraud liability).
+Cost model assumption: $C_{FP}$ = \$10 (analyst verification & merchant friction), $C_{FN}$ = \$500 (chargeback loss and merchant fraud liability).
 
 Analyzing scenario-level behavior reveals where the graph delivers decisive value:
 - **Seasonal Burst (`seasonal_burst`)**:
