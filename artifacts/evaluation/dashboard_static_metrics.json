@@ -1,0 +1,173 @@
+{
+    "framing": {
+        "title": "Abuse-Ring Sentinel: Temporal Behavioral Risk Detector with 24h Causal Relational Graph",
+        "disclaimer": "Synthetic evaluation; not a production benchmark. This system is defense-only. The model identifies and explains risk; it does not generate attacks. No financial action is executed automatically. Expected cost is evaluated at each model's validation-selected operating point and shows high seed-to-seed variance (cost delta range: -2,300 to +1,930). The more robust scenario-level result is the reduction in seasonal-burst false-positive rate.",
+        "core_truth": "Temporal behavioral signals provide the primary detection power, while a causal 24-hour relational graph adds incremental context that is especially useful for distinguishing legitimate burst traffic from coordinated activity."
+    },
+    "aggregate_comparison": {
+        "label": "Mean across evaluation seeds (Seeds 42, 100, 999) at validation-selected operating points",
+        "model_C": {
+            "name": "XGBoost (Temporal Only)",
+            "pr_auc": 0.955,
+            "precision": 0.6508,
+            "recall": 0.9532,
+            "f1": 0.7731,
+            "fpr": 0.0647,
+            "expected_cost": 32017
+        },
+        "model_B": {
+            "name": "XGBoost (Temporal + Graph)",
+            "pr_auc": 0.9568,
+            "precision": 0.6865,
+            "recall": 0.9515,
+            "f1": 0.7972,
+            "fpr": 0.0559,
+            "expected_cost": 31810
+        },
+        "deltas": {
+            "pr_auc": "+0.0018 (Mean)",
+            "precision": "+0.0357 (Mean)",
+            "recall": "-0.0017 (Mean)",
+            "f1": "+0.0241 (Mean)",
+            "fpr": "-0.0088 (Mean)",
+            "expected_cost": "-207 (Mean; High Seed Variance: -2,300 to +1,930)"
+        }
+    },
+    "seed_sensitivity": [
+        {
+            "seed": 42,
+            "model_C_pr_auc": 0.9526,
+            "model_B_pr_auc": 0.9581,
+            "pr_auc_delta": "+0.0055",
+            "precision_delta": "+0.0313",
+            "recall_delta": "+0.0028",
+            "fpr_delta": "-0.0058",
+            "cost_delta": -2300
+        },
+        {
+            "seed": 100,
+            "model_C_pr_auc": 0.9565,
+            "model_B_pr_auc": 0.9598,
+            "pr_auc_delta": "+0.0032",
+            "precision_delta": "+0.0152",
+            "recall_delta": "-0.0009",
+            "fpr_delta": "-0.0055",
+            "cost_delta": -250
+        },
+        {
+            "seed": 999,
+            "model_C_pr_auc": 0.9559,
+            "model_B_pr_auc": 0.9526,
+            "pr_auc_delta": "-0.0033",
+            "precision_delta": "+0.0730",
+            "recall_delta": "-0.0073",
+            "fpr_delta": "-0.0151",
+            "cost_delta": 1930
+        }
+    ],
+    "scenario_performance": [
+        {
+            "scenario": "seasonal_burst (Legitimate Festive Spike)",
+            "sample_count": 1000,
+            "metric_type": "False Positive Rate (FPR)",
+            "model_C_rate": "29.17%",
+            "model_B_rate": "14.03%",
+            "delta": "-15.14% (51.9% relative reduction in seasonal-burst false-positive rate across the three evaluation seeds)",
+            "verdict": "Graph relational dispersion correctly recognizes uncoordinated organic users."
+        },
+        {
+            "scenario": "background (Organic Baseline)",
+            "sample_count": 12711,
+            "metric_type": "False Positive Rate (FPR)",
+            "model_C_rate": "4.67%",
+            "model_B_rate": "4.91%",
+            "delta": "+0.24%",
+            "verdict": "Slight trade-off in ambient noise in exchange for massive seasonal FP reduction."
+        },
+        {
+            "scenario": "coordinated_burst (Abuse Ring)",
+            "sample_count": 450,
+            "metric_type": "Recall (Detection Rate)",
+            "model_C_rate": "97.78%",
+            "model_B_rate": "97.63%",
+            "delta": "-0.15%",
+            "verdict": "Sustains high detection rate on coordinated device/PM pooling."
+        },
+        {
+            "scenario": "merchant_ring (Collusive Merchants)",
+            "sample_count": 640,
+            "metric_type": "Recall (Detection Rate)",
+            "model_C_rate": "94.32%",
+            "model_B_rate": "94.11%",
+            "delta": "-0.21%",
+            "verdict": "Sustains high detection on multi-account collusive merchant rings."
+        }
+    ],
+    "feature_importance": [
+        {
+            "feature": "merchant_velocity_1h",
+            "type": "temporal",
+            "importance": 0.8095
+        },
+        {
+            "feature": "burst_score",
+            "type": "temporal",
+            "importance": 0.0462
+        },
+        {
+            "feature": "time_since_last_txn",
+            "type": "temporal",
+            "importance": 0.0262
+        },
+        {
+            "feature": "local_cluster_density_24h",
+            "type": "graph",
+            "importance": 0.0204
+        },
+        {
+            "feature": "amount_ratio_vs_customer",
+            "type": "temporal",
+            "importance": 0.0199
+        },
+        {
+            "feature": "two_hop_customer_count_24h",
+            "type": "graph",
+            "importance": 0.0186
+        },
+        {
+            "feature": "txn_count_1h",
+            "type": "temporal",
+            "importance": 0.0166
+        },
+        {
+            "feature": "shared_pm_customers_24h",
+            "type": "graph",
+            "importance": 0.0143
+        },
+        {
+            "feature": "customer_degree_24h",
+            "type": "graph",
+            "importance": 0.0118
+        },
+        {
+            "feature": "shared_device_customers_24h",
+            "type": "graph",
+            "importance": 0.0113
+        },
+        {
+            "feature": "txn_count_5m",
+            "type": "temporal",
+            "importance": 0.0046
+        },
+        {
+            "feature": "unique_merchants_1h",
+            "type": "temporal",
+            "importance": 0.0008
+        },
+        {
+            "feature": "new_device_24h",
+            "type": "temporal",
+            "importance": 0.0
+        }
+    ]
+}

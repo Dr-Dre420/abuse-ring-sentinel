@@ -1,0 +1,11 @@
+seed: 42
+num_customers: 2000
+num_merchants: 100
+num_devices: 1000
+num_pms: 2500
+target_transactions: 70000
+start_date: "2026-01-01"
+end_date: "2026-04-01"  # roughly 90 days
+train_ratio: 0.6
+val_ratio: 0.2
+test_ratio: 0.2

@@ -1,0 +1,17 @@
+target_col: "is_abuse"
+temporal_features:
+  - "txn_count_5m"
+  - "txn_count_1h"
+  - "unique_merchants_1h"
+  - "amount_ratio_vs_customer"
+  - "time_since_last_txn"
+  - "new_device_24h"
+  - "burst_score"
+  - "merchant_velocity_1h"
+
+graph_features:
+  - "customer_degree_24h"
+  - "shared_device_customers_24h"
+  - "shared_pm_customers_24h"
+  - "two_hop_customer_count_24h"
+  - "local_cluster_density_24h"

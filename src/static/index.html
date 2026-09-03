@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abuse-Ring Sentinel | Risk Investigator & Evaluation Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-badge">DEFENSIVE RISK DEFENSE</div>
+        <div class="brand-title-row">
+          <h1 class="brand-title">Abuse-Ring Sentinel</h1>
+          <span class="engine-badge">Temporal + 24h Causal Graph</span>
+        </div>
+        <p class="brand-subtitle">Coordinated Payment Abuse Detection & False-Positive Suppression</p>
+      </div>
+
+      <nav class="nav-tabs">
+        <button class="tab-btn active" id="tab-btn-investigator" onclick="switchTab('investigator')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          Case Investigator
+        </button>
+        <button class="tab-btn" id="tab-btn-evaluation" onclick="switchTab('evaluation')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          Model Evaluation
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Notification Banner -->
+  <div id="toast-banner" class="toast-banner hidden"></div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="main-container">
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: CASE INVESTIGATOR                                                 -->
+    <!-- ========================================================================= -->
+    <section id="view-investigator" class="view-section active">
+
+      <!-- Case Selection Bar -->
+      <div class="card demo-selector-card">
+        <div class="demo-selector-header">
+          <div>
+            <span class="section-label">CURATED DEMO SCENARIOS</span>
+            <h2 class="section-title">Select an Evaluation Case</h2>
+          </div>
+          <div class="search-box">
+            <input type="text" id="custom-case-input" placeholder="Enter Txn ID (e.g. T57997)" />
+            <button class="btn btn-secondary" onclick="loadCustomCase()">Lookup</button>
+          </div>
+        </div>
+
+        <div class="demo-buttons-grid">
+          <button class="demo-btn active" id="btn-case-A" onclick="selectDemoCase('T57997')">
+            <div class="demo-btn-top">
+              <span class="badge badge-abuse">CASE A : ABUSE</span>
+              <span class="txn-code">T57997</span>
+            </div>
+            <div class="demo-btn-title">Coordinated Burst Ring</div>
+            <div class="demo-btn-desc">High velocity + 28 shared-device accounts. Correctly escalated.</div>
+          </button>
+
+          <button class="demo-btn" id="btn-case-B" onclick="selectDemoCase('T59899')">
+            <div class="demo-btn-top">
+              <span class="badge badge-abuse">CASE B : ABUSE</span>
+              <span class="txn-code">T59899</span>
+            </div>
+            <div class="demo-btn-title">Merchant-Ring Collusion</div>
+            <div class="demo-btn-desc">Recycled devices funneling into colluding merchants. Correctly escalated.</div>
+          </button>
+
+          <button class="demo-btn" id="btn-case-C" onclick="selectDemoCase('T60698')">
+            <div class="demo-btn-top">
+              <span class="badge badge-legit">CASE C : LEGITIMATE</span>
+              <span class="txn-code">T60698</span>
+            </div>
+            <div class="demo-btn-title">Seasonal Volume Burst</div>
+            <div class="demo-btn-desc">Model C false alarm cleared by Model B via relational dispersion.</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="case-loading" class="loading-state hidden">
+        <div class="spinner"></div>
+        <p>Loading case telemetry and causal 24-hour ego-network...</p>
+      </div>
+
+      <!-- Case Content Container -->
+      <div id="case-content" class="case-content">
+
+        <!-- Top Overview Row -->
+        <div class="grid grid-3">
+          
+          <!-- Focal Transaction Details -->
+          <div class="card">
+            <div class="card-header">
+              <span class="section-label">TRANSACTION TELEMETRY</span>
+              <h3 class="card-title" id="display-case-id">T57997</h3>
+            </div>
+            <div class="telemetry-list">
+              <div class="telemetry-item">
+                <span class="telemetry-label">Timestamp</span>
+                <span class="telemetry-val" id="disp-ts">-</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Amount</span>
+                <span class="telemetry-val amount-val" id="disp-amount">-</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Customer ID</span>
+                <span class="telemetry-val code-val" id="disp-cust">-</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Merchant ID</span>
+                <span class="telemetry-val code-val" id="disp-merch">-</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Device ID</span>
+                <span class="telemetry-val code-val" id="disp-dev">-</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Payment Method</span>
+                <span class="telemetry-val code-val" id="disp-pm">-</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Scenario Context</span>
+                <span class="telemetry-val" id="disp-scenario">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Model Scores & Decision Card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="section-label">DUAL MODEL INFERENCE</span>
+              <h3 class="card-title">Risk Scoring Comparison</h3>
+            </div>
+
+            <!-- Model B (Graph) -->
+            <div class="model-score-box primary-model">
+              <div class="model-score-header">
+                <span class="model-title">Model B (Temporal + Graph)</span>
+                <span class="model-verdict-badge" id="disp-verdict-b">FLAGGED</span>
+              </div>
+              <div class="score-display-row">
+                <div class="score-number" id="disp-score-b">0.9997</div>
+                <div class="score-thresh-note">Operating Threshold: <span id="disp-thresh-b">0.1519</span></div>
+              </div>
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill fill-danger" id="progress-b" style="width: 99%;"></div>
+              </div>
+            </div>
+
+            <!-- Model C (Temporal-Only) -->
+            <div class="model-score-box secondary-model">
+              <div class="model-score-header">
+                <span class="model-title">Model C (Temporal Only)</span>
+                <span class="model-verdict-badge" id="disp-verdict-c">FLAGGED</span>
+              </div>
+              <div class="score-display-row">
+                <div class="score-number" id="disp-score-c">0.9235</div>
+                <div class="score-thresh-note">Operating Threshold: <span id="disp-thresh-c">0.1450</span></div>
+              </div>
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill fill-warning" id="progress-c" style="width: 92%;"></div>
+              </div>
+            </div>
+
+            <!-- Delta Insight -->
+            <div class="delta-insight-box" id="disp-delta-box">
+              <span class="delta-icon">⚡</span>
+              <span class="delta-text" id="disp-delta-text">Graph context in agreement with temporal surge.</span>
+            </div>
+          </div>
+
+          <!-- Defensive Recommendation -->
+          <div class="card defensive-card">
+            <div class="card-header">
+              <span class="section-label">DEFENSIVE RISK POLICY</span>
+              <h3 class="card-title">Reversible Action Protocol</h3>
+            </div>
+            
+            <div class="recommendation-badge-container">
+              <div class="rec-action-badge action-escalate" id="disp-rec-action">ESCALATE FOR ANALYST AUTHORIZATION</div>
+              <span class="rec-safe-tag">✓ No Irreversible Action Taken</span>
+            </div>
+
+            <p class="rec-guidance" id="disp-rec-guidance">
+              Immediate escalation to Tier-2 Abuse Ring Specialist for human authorization. No financial action is executed automatically.
+            </p>
+
+            <div class="policy-safeguards">
+              <div class="safeguard-item">
+                <span class="check-icon">✓</span>
+                <span>No financial action is executed automatically</span>
+              </div>
+              <div class="safeguard-item">
+                <span class="check-icon">✓</span>
+                <span>Human-in-the-loop analyst authorization required</span>
+              </div>
+              <div class="safeguard-item">
+                <span class="check-icon">✓</span>
+                <span>Audit trail preserved with full graph topology</span>
+              </div>
+            </div>
+
+            <!-- Analyst Action Selection & Action Log -->
+            <div class="action-selection-section">
+              <div class="section-label" style="margin-bottom: 0.4rem;">ANALYST RECOMMENDATION QUEUE</div>
+              <div class="action-btn-group">
+                <button class="btn-action-select" id="btn-act-monitor" onclick="recordAnalystAction('Monitor')">Monitor</button>
+                <button class="btn-action-select" id="btn-act-review" onclick="recordAnalystAction('Analyst review')">Analyst Review</button>
+                <button class="btn-action-select" id="btn-act-escalate" onclick="recordAnalystAction('Escalate for analyst authorization')">Escalate for Authorization</button>
+              </div>
+
+              <!-- Action Log -->
+              <div class="action-log-panel" id="analyst-action-log">
+                <div class="action-log-header">
+                  <span class="section-label">ACTION LOG</span>
+                  <span class="log-status-badge" id="log-status-badge">Recommendation Recorded</span>
+                </div>
+                <div class="log-entry">
+                  <div class="log-row">
+                    <span class="log-label">Timestamp:</span>
+                    <span class="log-val font-mono" id="log-time">-</span>
+                  </div>
+                  <div class="log-row">
+                    <span class="log-label">Case:</span>
+                    <span class="log-val code-val" id="log-case-id">-</span>
+                  </div>
+                  <div class="log-row">
+                    <span class="log-label">Recommendation:</span>
+                    <span class="log-val font-semibold" id="log-rec-action">-</span>
+                  </div>
+                  <div class="log-row">
+                    <span class="log-label">Status:</span>
+                    <span class="log-val text-amber font-semibold" id="log-status">Awaiting human authorization</span>
+                  </div>
+                  <div class="log-row">
+                    <span class="log-label">Safety:</span>
+                    <span class="log-val text-muted">No financial action is executed automatically.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deterministic Explainability & Features Row -->
+        <div class="grid grid-2" style="margin-top: 1.5rem;">
+          
+          <!-- Deterministic Reasons Panel -->
+          <div class="card">
+            <div class="card-header">
+              <span class="section-label">DETERMINISTIC EXPLAINABILITY</span>
+              <h3 class="card-title">Evidence-Grounded Signals</h3>
+              <p class="card-subtitle">Derived strictly from observable features in the causal window. Zero hallucination.</p>
+            </div>
+            <div class="reasons-list" id="disp-reasons-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Key Feature Values Grid -->
+          <div class="card">
+            <div class="card-header">
+              <span class="section-label">OBSERVABLE FEATURES</span>
+              <h3 class="card-title">Feature Vector Snapshot</h3>
+              <p class="card-subtitle">Values computed strictly within causal 24h window [t - 24h, t].</p>
+            </div>
+            <div class="features-table-wrapper">
+              <table class="features-table">
+                <thead>
+                  <tr>
+                    <th>Feature Name</th>
+                    <th>Type</th>
+                    <th>Observed Value</th>
+                    <th>Reference Benchmark</th>
+                  </tr>
+                </thead>
+                <tbody id="disp-features-tbody">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Static Investigation Timeline -->
+        <div class="card" style="margin-top: 1.5rem;">
+          <div class="card-header">
+            <div>
+              <span class="section-label">STATIC INVESTIGATION TIMELINE</span>
+              <h3 class="card-title">24-Hour Pre-Event Trajectory</h3>
+              <p class="card-subtitle">
+                Deterministic event progression derived strictly from historical window events [t - 24h, t]. (No animation / no playback).
+              </p>
+            </div>
+          </div>
+          <div class="timeline-track" id="disp-investigation-timeline">
+            <!-- Rendered via JS from real case data -->
+          </div>
+        </div>
+
+        <!-- Causal Relationship Graph Visualization -->
+        <div class="card" style="margin-top: 1.5rem;">
+          <div class="card-header graph-card-header">
+            <div>
+              <span class="section-label">CAUSAL 24-HOUR EGO-NETWORK</span>
+              <h3 class="card-title">Ego-Graph Topology (Zero Lookahead)</h3>
+              <p class="card-subtitle" id="graph-subtitle">
+                Visualizing relationships active in [t - 24h, t]. Shows focal entities and immediate 2-hop connections.
+              </p>
+            </div>
+            <div class="graph-legend">
+              <span class="legend-item"><span class="legend-dot dot-customer-focal"></span> Focal Customer</span>
+              <span class="legend-item"><span class="legend-dot dot-customer"></span> Shared Customer</span>
+              <span class="legend-item"><span class="legend-dot dot-device"></span> Device</span>
+              <span class="legend-item"><span class="legend-dot dot-pm"></span> Payment Method</span>
+              <span class="legend-item"><span class="legend-dot dot-merchant"></span> Merchant</span>
+            </div>
+          </div>
+
+          <!-- Graph Canvas Container -->
+          <div class="graph-canvas-container">
+            <canvas id="network-canvas" width="1100" height="480"></canvas>
+            <div class="graph-overlay-note">
+              <span class="pulse-dot"></span> Causal Graph View | Drag nodes to inspect cluster structure
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: MODEL EVALUATION                                                  -->
+    <!-- ========================================================================= -->
+    <section id="view-evaluation" class="view-section">
+
+      <!-- Framing Disclaimer Banner -->
+      <div class="eval-framing-banner">
+        <div class="eval-framing-icon">⚖️</div>
+        <div>
+          <div class="eval-framing-badge">SCIENTIFIC AUDIT & GROUNDED FRAMING</div>
+          <h3 class="eval-framing-title">Methodological Truth & Honest Framing</h3>
+          <p class="eval-framing-desc">
+            <strong>Synthetic evaluation; not a production benchmark.</strong> This system is defense-only. The model identifies and explains risk; it does not generate attacks. No financial action is executed automatically. Temporal behavioral signals provide the primary detection power, while a causal 24-hour relational graph adds incremental context that is especially useful for distinguishing legitimate burst traffic from coordinated activity (yielding a 51.9% relative reduction in seasonal-burst false-positive rate across the three evaluation seeds).
+          </p>
+        </div>
+      </div>
+
+      <!-- Core Aggregate Comparison Cards -->
+      <div class="grid grid-3" style="margin-top: 1.5rem;">
+        
+        <!-- PR-AUC -->
+        <div class="metric-card">
+          <div class="metric-card-label">HELD-OUT PR-AUC (MEAN ACROSS SEEDS)</div>
+          <div class="metric-value-row">
+            <span class="metric-main-val" id="eval-pr-b">0.9568</span>
+            <span class="metric-delta delta-pos" id="eval-pr-delta">+0.0018 (Mean)</span>
+          </div>
+          <div class="metric-subtext">
+            Model B (Graph): <strong>0.9568</strong> vs Model C (Temporal): <strong>0.9550</strong>
+          </div>
+        </div>
+
+        <!-- Precision -->
+        <div class="metric-card">
+          <div class="metric-card-label">HELD-OUT PRECISION (MEAN ACROSS SEEDS)</div>
+          <div class="metric-value-row">
+            <span class="metric-main-val" id="eval-prec-b">0.6865</span>
+            <span class="metric-delta delta-pos" id="eval-prec-delta">+0.0357 (Mean)</span>
+          </div>
+          <div class="metric-subtext">
+            Model B (Graph): <strong>68.65%</strong> vs Model C (Temporal): <strong>65.08%</strong>
+          </div>
+        </div>
+
+        <!-- Expected Cost -->
+        <div class="metric-card">
+          <div class="metric-card-label">OPERATIONAL EXPECTED COST (C_FP=10, C_FN=500)</div>
+          <div class="metric-value-row">
+            <span class="metric-main-val" id="eval-cost-b">31,810</span>
+            <span class="metric-delta delta-pos" id="eval-cost-delta">-207 (Mean)</span>
+          </div>
+          <div class="metric-subtext">
+            Evaluated at model-specific validation thresholds (Seed delta range: -2,300 to +1,930; high seed variance).
+          </div>
+        </div>
+      </div>
+
+      <!-- Seed Sensitivity & PR Curve Row -->
+      <div class="grid grid-2" style="margin-top: 1.5rem;">
+        
+        <!-- Seed Sensitivity Table -->
+        <div class="card">
+          <div class="card-header">
+            <span class="section-label">SEED SENSITIVITY AUDIT</span>
+            <h3 class="card-title">Multi-Seed Stability Verification</h3>
+            <p class="card-subtitle">Transparent reporting across 3 generator seeds to verify graph consistency.</p>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Seed</th>
+                  <th>Model C PR-AUC</th>
+                  <th>Model B PR-AUC</th>
+                  <th>PR Delta</th>
+                  <th>Precision Delta</th>
+                  <th>Cost Delta</th>
+                </tr>
+              </thead>
+              <tbody id="eval-seeds-tbody">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer-note">
+            *Expected cost is evaluated at each model's validation-selected operating point and shows high seed-to-seed variance (cost delta range: -2,300 to +1,930). The more robust scenario-level result is the 51.9% relative reduction in seasonal-burst false-positive rate across the three evaluation seeds.
+          </div>
+        </div>
+
+        <!-- Precision-Recall Curve -->
+        <div class="card">
+          <div class="card-header">
+            <span class="section-label">CURVE VALIDATION</span>
+            <h3 class="card-title">Precision-Recall Curve (Held-Out Test Set)</h3>
+            <p class="card-subtitle">Empirical curve demonstrating superior high-recall precision for Model B.</p>
+          </div>
+          <div class="chart-container">
+            <canvas id="pr-curve-canvas" width="500" height="260"></canvas>
+          </div>
+          <div class="pr-chart-legend">
+            <span class="legend-item"><span class="chart-legend-line line-model-b"></span> Model B (Temporal + Graph)</span>
+            <span class="legend-item"><span class="chart-legend-line line-model-c"></span> Model C (Temporal Only)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scenario Breakdown & Confusion Matrix Row -->
+      <div class="grid grid-2" style="margin-top: 1.5rem;">
+        
+        <!-- Scenario Performance Grid -->
+        <div class="card">
+          <div class="card-header">
+            <span class="section-label">BEHAVIORAL SCENARIO ANALYSIS</span>
+            <h3 class="card-title">Scenario-Level Breakdown</h3>
+            <p class="card-subtitle">Where graph relational context delivers measurable operational value.</p>
+          </div>
+          <div class="scenario-cards-list" id="eval-scenarios-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Confusion Matrices Comparison -->
+        <div class="card">
+          <div class="card-header">
+            <span class="section-label">OPERATING DECISION MATRICES</span>
+            <h3 class="card-title">Held-Out Confusion Matrices</h3>
+            <p class="card-subtitle">Evaluated at model-specific validation-selected operating thresholds.</p>
+          </div>
+          
+          <div class="confusion-matrices-grid">
+            <!-- Model B Matrix -->
+            <div class="matrix-box">
+              <div class="matrix-title">Model B (Temporal + Graph)</div>
+              <div class="matrix-thresh">Threshold: <strong id="matrix-b-thresh">0.1519</strong></div>
+              <div class="cm-table-wrapper">
+                <table class="cm-table">
+                  <tr>
+                    <td></td>
+                    <th>Pred Legit</th>
+                    <th>Pred Abuse</th>
+                  </tr>
+                  <tr>
+                    <th>Actual Legit</th>
+                    <td class="cell-tn" id="cm-b-tn">-</td>
+                    <td class="cell-fp" id="cm-b-fp">-</td>
+                  </tr>
+                  <tr>
+                    <th>Actual Abuse</th>
+                    <td class="cell-fn" id="cm-b-fn">-</td>
+                    <td class="cell-tp" id="cm-b-tp">-</td>
+                  </tr>
+                </table>
+              </div>
+              <div class="cm-cost-label">Total Expected Cost: <strong id="cm-b-cost">-</strong></div>
+            </div>
+
+            <!-- Model C Matrix -->
+            <div class="matrix-box">
+              <div class="matrix-title">Model C (Temporal Only)</div>
+              <div class="matrix-thresh">Threshold: <strong id="matrix-c-thresh">0.1450</strong></div>
+              <div class="cm-table-wrapper">
+                <table class="cm-table">
+                  <tr>
+                    <td></td>
+                    <th>Pred Legit</th>
+                    <th>Pred Abuse</th>
+                  </tr>
+                  <tr>
+                    <th>Actual Legit</th>
+                    <td class="cell-tn" id="cm-c-tn">-</td>
+                    <td class="cell-fp" id="cm-c-fp">-</td>
+                  </tr>
+                  <tr>
+                    <th>Actual Abuse</th>
+                    <td class="cell-fn" id="cm-c-fn">-</td>
+                    <td class="cell-tp" id="cm-c-tp">-</td>
+                  </tr>
+                </table>
+              </div>
+              <div class="cm-cost-label">Total Expected Cost: <strong id="cm-c-cost">-</strong></div>
+            </div>
+          </div>
+
+          <!-- Feature Importance Chart -->
+          <div class="feature-importance-section" style="margin-top: 1.5rem;">
+            <div class="section-label">HONEST FEATURE ATTRIBUTION</div>
+            <h4 class="card-title" style="font-size: 0.95rem;">Model B Learned Feature Importances</h4>
+            <div class="importance-bars-list" id="eval-importance-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-container">
+      <span>Abuse-Ring Sentinel &bull; Razorpay AI Risk Manager Track</span>
+      <span>Synthetic Evaluation &bull; Frozen Methodology P1.7 &bull; Zero Temporal Lookahead</span>
+    </div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
