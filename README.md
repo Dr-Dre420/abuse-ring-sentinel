@@ -125,25 +125,56 @@ Five causal graph features are extracted for each event:
 
 ---
 
-## 7. Model Methodology & Model Ladder
-The investigation establishes a controlled model ladder across three configurations:
+## 7. Model Methodology & Experiment Ladder
+To establish rigorous benchmark floors and isolate incremental signal value, the investigation evaluates a four-tier **Experiment Ladder**:
 
-1. **Model A (P0 Interpretable Baseline Floor)**: Logistic Regression with `class_weight='balanced'` trained exclusively on temporal behavioral features.
-   - *Purpose*: Provides the simplest linear baseline floor to measure whether non-linear gradient boosted trees add value.
-2. **Model C (P1.5 Controlled Temporal Baseline)**: XGBoost (`max_depth=4`, `learning_rate=0.1`, `scale_pos_weight` tuned on train) trained exclusively on temporal behavioral features.
-   - *Purpose*: The primary fair baseline control.
-3. **Model B (P1/P1.7 Proposed Graph-Enhanced Model)**: XGBoost sharing identical hyperparameters and temporal features as Model C, with 5 incremental 24-hour causal graph features added.
-   - *Purpose*: Isolates the precise incremental contribution of relational graph topology.
+```
+                       ┌──────────────────────────────────────────────────┐
+                       │  Model 0: Naive Single-Signal Heuristic          │
+                       │  (Non-ML rule: merchant_velocity_1h >= 2.0)      │
+                       └─────────────────────────┬────────────────────────┘
+                                                 ▼
+                       ┌──────────────────────────────────────────────────┐
+                       │  Model A: Logistic Regression Baseline Floor     │
+                       │  (Linear statistical baseline on temporal space) │
+                       └─────────────────────────┬────────────────────────┘
+                                                 ▼
+                       ┌──────────────────────────────────────────────────┐
+                       │  Model C: XGBoost Temporal Control               │
+                       │  (Non-linear gradient boosted tree benchmark)    │
+                       └─────────────────────────┬────────────────────────┘
+                                                 ▼
+                       ┌──────────────────────────────────────────────────┐
+                       │  Model B: XGBoost Temporal + 24h Relational Graph│
+                       │  (Full proposed graph-augmented model)           │
+                       └──────────────────────────────────────────────────┘
+```
 
-> **Controlled Comparison Notice**: The central controlled comparison is **Model C vs Model B**. Both share the identical XGBoost model family, hyperparameters, and temporal features, isolating the incremental contribution of the causal 24-hour relational graph. Model A serves as the initial baseline floor.
+### Role of Each Model
+1. **Model 0 (Naive Single-Signal Heuristic Floor)**: Flag if `merchant_velocity_1h >= 2.0` (threshold derived deterministically on validation to minimize expected cost under $\text{Recall} \ge 0.80$), providing a transparent non-ML operational floor.
+2. **Model A (P0 Interpretable Linear Baseline Floor)**: Logistic Regression with `class_weight='balanced'` on temporal behavioral features, measuring whether non-linear modeling is required.
+3. **Model C (P1.5 Controlled Temporal Baseline)**: XGBoost (`max_depth=4`, `learning_rate=0.1`, `scale_pos_weight` tuned on train) trained exclusively on temporal behavioral features, serving as the fair baseline control.
+4. **Model B (P1/P1.7 Proposed Graph-Enhanced Model)**: XGBoost sharing identical hyperparameters and temporal features as Model C, augmented with 5 causal 24-hour relational graph features to isolate the incremental value of network context.
 
-Thresholds are selected **strictly on the validation set** to minimize expected financial cost under the operational constraint $\text{Recall} \ge 0.80$, then frozen for evaluation on the held-out test set.
+> **Controlled Graph Experiment**: The controlled graph comparison is **XGBoost temporal-only (Model C) vs. XGBoost temporal + graph (Model B)**. Both share the exact same model family, tree depth, learning rate, and temporal feature space. Model 0 and Model A provide non-ML and linear reference floors; they are not part of the isolated graph contribution experiment.
+
+All decision thresholds are selected **strictly on the validation set** to minimize expected financial cost under the operational constraint $\text{Recall} \ge 0.80$, then frozen for evaluation on the held-out test set.
 
 ---
 
 ## 8. Final Model Comparison
 
-### Initial P0 Baseline (Model A)
+### Baseline Floors (Model 0 & Model A)
+- **Model 0 — Naive Single-Signal Heuristic (`merchant_velocity_1h >= 2.0`)** (Held-Out Test Set):
+  - Validation Cost: `29,990` | Validation Recall: `96.33%` | Frozen Validation Threshold: `2.0`
+  - Held-out PR-AUC: `0.9460` (continuous `merchant_velocity_1h` ranking)
+  - Held-out Precision: `53.34%` (0.5334)
+  - Held-out Recall: `96.06%` (0.9606)
+  - Held-out F1 Score: `0.6859`
+  - Held-out FPR: `6.68%` (0.0668)
+  - Expected Cost: `30,660`
+  - Confusion Matrix: `TN=12,795, FP=916, FN=43, TP=1,047`
+  - *Artifact*: `artifacts/evaluation/model_0_metrics.json`
 - **Model A — Logistic Regression + temporal features** (Held-Out Test Set, Seed 42):
   - Validation PR-AUC: `0.9495` | Frozen Validation Threshold: `0.2407`
   - Held-out PR-AUC: `0.9587`
@@ -153,20 +184,21 @@ Thresholds are selected **strictly on the validation set** to minimize expected 
   - Held-out FPR: `8.22%` (0.0822)
   - Expected Cost: `28,280`
   - Confusion Matrix: `TN=12,583, FP=1,128, FN=34, TP=1,056`
+  - *Artifact*: `artifacts/evaluation/baseline_metrics.json`
 
 ### Controlled Evaluation: Model C vs. Model B (3-Seed Mean)
 Across the 3-seed evaluation audit on the held-out test set (14,801 samples):
 
-| Evaluation Metric | Model A (LR Baseline Floor) | Model C (XGBoost Temporal Control) | Model B (XGBoost Temporal + Graph) | Delta (C $\to$ B) | Operational Implication |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **PR-AUC (Mean)** | 0.9587* | **0.9550** | **0.9568** | **+0.0018 (Mean)** | Incremental ranking improvement (2 of 3 seeds positive) |
-| **Precision (Mean)** | 48.35%* | **65.08%** | **68.65%** | **+3.57% (Mean)** | Higher precision on flagged accounts |
-| **Recall (Mean)** | 96.88%* | **95.32%** | **95.15%** | **-0.17% (Mean)** | Comparable high coverage on abuse |
-| **F1 Score (Mean)** | 0.6451* | **0.7731** | **0.7972** | **+0.0241 (Mean)** | Harmonic precision/recall balance |
-| **FPR (Mean)** | 8.22%* | **6.47%** | **5.59%** | **-0.88% (Mean)** | Overall suppression of false positive noise |
-| **Expected Cost** | 28,280* | **32,017** | **31,810** | **-207 (Mean)** | High seed variance (range: -2,300 to +1,930) |
+| Evaluation Metric | Model 0 (Naive Heuristic Floor) | Model A (LR Baseline Floor) | Model C (XGBoost Temporal Control) | Model B (XGBoost Temporal + Graph) | Delta (C $\to$ B) | Operational Implication |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **PR-AUC (Mean)** | 0.9460* | 0.9587* | **0.9550** | **0.9568** | **+0.0018 (Mean)** | Incremental ranking improvement (2 of 3 seeds positive) |
+| **Precision (Mean)** | 53.34%* | 48.35%* | **65.08%** | **68.65%** | **+3.57% (Mean)** | Higher precision on flagged accounts |
+| **Recall (Mean)** | 96.06%* | 96.88%* | **95.32%** | **95.15%** | **-0.17% (Mean)** | Comparable high coverage on abuse |
+| **F1 Score (Mean)** | 0.6859* | 0.6451* | **0.7731** | **0.7972** | **+0.0241 (Mean)** | Harmonic precision/recall balance |
+| **FPR (Mean)** | 6.68%* | 8.22%* | **6.47%** | **5.59%** | **-0.88% (Mean)** | Overall suppression of false positive noise |
+| **Expected Cost** | 30,660* | 28,280* | **32,017** | **31,810** | **-207 (Mean)** | High seed variance (range: -2,300 to +1,930) |
 
-*\*Model A values reflect the single-seed P0 baseline floor.*
+*\*Model 0 and Model A values reflect deterministic single-seed baseline floors on the held-out test set.*
 
 > **Disclosure on Operational Cost**: Expected cost is evaluated at each model's validation-selected operating point and shows high seed-to-seed variance (cost delta range: -2,300 to +1,930). The -207 mean cost delta is not a robust standalone headline; the more robust scenario-level result is the 51.9% relative reduction in seasonal-burst false-positive rate.
 
@@ -349,6 +381,7 @@ abuse-ring-sentinel/
 │   ├── data.py                    # Multi-scenario synthetic transaction generator
 │   ├── features.py                # Causal 24h bipartite graph feature extractor
 │   ├── evaluate.py                # Multi-seed audit & evaluation suite
+│   ├── model_0.py                 # Naive single-signal heuristic baseline evaluation
 │   ├── train.py                   # Model training & threshold selection
 │   └── static/
 │       ├── index.html             # Risk Operations Console
@@ -356,6 +389,7 @@ abuse-ring-sentinel/
 │       └── app.js                 # Interactive dashboard logic & settling canvas
 ├── tests/
 │   ├── test_graph.py              # Zero-leakage temporal regression tests
+│   ├── test_model_0.py            # Model 0 deterministic validation & test assertions
 │   ├── test_p2_dashboard_api.py   # API contracts, Case C values & safety tests
 │   └── test_smoke.py              # Core endpoint smoke tests
 └── assets/

@@ -1,0 +1,29 @@
+{
+  "model_name": "Model 0 \u2014 Naive Single-Signal Heuristic",
+  "signal": "merchant_velocity_1h",
+  "frozen_threshold": 2.0,
+  "precision": 0.5333672949566989,
+  "recall": 0.9605504587155963,
+  "f1": 0.6858827382902064,
+  "pr_auc": 0.9459953151511931,
+  "false_positive_rate": 0.06680767267157757,
+  "expected_cost": 30660.0,
+  "confusion_matrix": {
+    "tn": 12795,
+    "fp": 916,
+    "fn": 43,
+    "tp": 1047
+  },
+  "validation_metrics": {
+    "validation_cost": 29990.0,
+    "validation_recall": 0.963302752293578,
+    "validation_precision": 0.5124450951683748,
+    "validation_f1": 0.6690028671551449,
+    "validation_cm": {
+      "tn": 12624,
+      "fp": 999,
+      "fn": 40,
+      "tp": 1050
+    }
+  }
+}
