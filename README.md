@@ -2,7 +2,7 @@
 
 > **Track**: Razorpay AI Risk Manager  
 > **Repository**: [https://github.com/Dr-Dre420/abuse-ring-sentinel](https://github.com/Dr-Dre420/abuse-ring-sentinel)  
-> **Methodology Status**: Frozen & Scientifically Audited (P0 – P1.7 Complete)  
+> **Methodology Status**: Frozen & Scientifically Audited
 > **Evaluation Nature**: Synthetic Evaluation; Not a Production Benchmark.  
 > **Safety Notice**: Defense-only risk intelligence. All defensive recommendations require human analyst authorization. No financial action is executed automatically.
 
