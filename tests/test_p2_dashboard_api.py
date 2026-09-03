@@ -195,3 +195,38 @@ def test_case_c_calibrated_disagreement_explanation():
     for forbidden in ["proved", "confirmed no fraud", "eliminated the risk", "overruled"]:
         assert forbidden not in expl.lower()
 
+def test_case_c_exact_backend_disagreement_values_and_safety():
+    """Verify Case C exhibits genuine disagreement with actual backend model values and defensive safety."""
+    res = client.get("/case/T60698")
+    assert res.status_code == 200
+    data = res.json()
+
+    # Ground truth
+    assert data["is_abuse_ground_truth"] == 0
+
+    # Model C (Temporal-only flagged)
+    model_c = data["model_C"]
+    assert round(model_c["risk_score"], 4) == 0.2857
+    assert round(model_c["threshold"], 4) == 0.2383
+    assert model_c["prediction"] == 1
+    assert model_c["decision"] == "Flagged (Abuse)"
+
+    # Model B (Temporal + Graph cleared)
+    model_b = data["model_B"]
+    assert round(model_b["risk_score"], 4) == 0.1178
+    assert round(model_b["threshold"], 4) == 0.1519
+    assert model_b["prediction"] == 0
+    assert model_b["decision"] == "Cleared (Legitimate)"
+
+    # Delta
+    delta = data["delta_analysis"]
+    assert round(delta["score_diff"], 4) == round(model_b["risk_score"] - model_c["risk_score"], 4)
+    assert delta["score_diff"] < 0
+
+    # Defensive recommendation safety
+    rec = data["recommendation"]
+    assert rec["action"] == "Monitor"
+    assert rec["reversible"] is True
+    assert "allow transaction to complete normally" in rec["guidance"].lower()
+
+

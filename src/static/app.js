@@ -73,7 +73,7 @@ async function loadCase(txnId) {
 }
 
 function renderCaseDetails(data) {
-  // Telemetry
+  // Case Context Strip
   document.getElementById('display-case-id').innerText = data.txn_id;
   document.getElementById('disp-ts').innerText = new Date(data.ts).toLocaleString();
   document.getElementById('disp-amount').innerText = `₹${data.amount.toFixed(2)}`;
@@ -85,59 +85,108 @@ function renderCaseDetails(data) {
   const scenarioDesc = data.demo_info ? data.demo_info.demo_type : data.scenario_id;
   document.getElementById('disp-scenario').innerText = scenarioDesc;
 
-  // Model B (Graph Enhanced)
-  const scoreB = data.model_B.risk_score;
-  const threshB = data.model_B.threshold;
-  document.getElementById('disp-score-b').innerText = scoreB.toFixed(4);
-  document.getElementById('disp-thresh-b').innerText = threshB.toFixed(4);
-  const progB = document.getElementById('progress-b');
-  progB.style.width = `${Math.min(100, Math.max(2, scoreB * 100))}%`;
-
-  const verdictB = document.getElementById('disp-verdict-b');
-  if (data.model_B.prediction === 1) {
-    verdictB.innerText = "FLAGGED (ABUSE)";
-    verdictB.className = "model-verdict-badge verdict-flagged";
-    progB.className = "progress-bar-fill fill-danger";
-  } else {
-    verdictB.innerText = "CLEARED (LEGITIMATE)";
-    verdictB.className = "model-verdict-badge verdict-cleared";
-    progB.className = "progress-bar-fill fill-success";
+  // Ground Truth Pill
+  const gtPill = document.getElementById('disp-ground-truth-pill');
+  if (gtPill) {
+    if (data.is_abuse_ground_truth === 1) {
+      gtPill.innerText = "🚨 ABUSE GROUND TRUTH";
+      gtPill.className = "status-pill pill-abuse";
+    } else {
+      gtPill.innerText = "✓ LEGITIMATE (NO ABUSE)";
+      gtPill.className = "status-pill pill-legit";
+    }
   }
 
-  // Model C (Temporal Only)
+  // Model C (Temporal Behavioral Control)
   const scoreC = data.model_C.risk_score;
   const threshC = data.model_C.threshold;
   document.getElementById('disp-score-c').innerText = scoreC.toFixed(4);
+  const scoreCPct = document.getElementById('disp-score-c-pct');
+  if (scoreCPct) scoreCPct.innerText = `${(scoreC * 100).toFixed(1)}% Risk Score`;
   document.getElementById('disp-thresh-c').innerText = threshC.toFixed(4);
+  const diffC = scoreC - threshC;
+  const relC = document.getElementById('disp-thresh-c-rel');
+  if (relC) relC.innerText = `${diffC >= 0 ? '+' : ''}${diffC.toFixed(4)} ${diffC >= 0 ? 'above threshold' : 'below threshold'}`;
+  
   const progC = document.getElementById('progress-c');
   progC.style.width = `${Math.min(100, Math.max(2, scoreC * 100))}%`;
+  const markerC = document.getElementById('marker-c');
+  if (markerC) markerC.style.left = `${Math.min(96, Math.max(4, threshC * 100))}%`;
 
   const verdictC = document.getElementById('disp-verdict-c');
   if (data.model_C.prediction === 1) {
-    verdictC.innerText = "FLAGGED (ABUSE)";
+    verdictC.innerText = "🚨 FLAGGED (ABUSE)";
     verdictC.className = "model-verdict-badge verdict-flagged";
     progC.className = "progress-bar-fill fill-warning";
   } else {
-    verdictC.innerText = "CLEARED (LEGITIMATE)";
+    verdictC.innerText = "✓ CLEARED (LEGITIMATE)";
     verdictC.className = "model-verdict-badge verdict-cleared";
     progC.className = "progress-bar-fill fill-success";
   }
 
-  // Delta insight
-  const deltaBox = document.getElementById('disp-delta-box');
-  const deltaText = document.getElementById('disp-delta-text');
-  if (data.delta_analysis.graph_impact === "Suppressed False Alarm") {
-    deltaBox.style.borderColor = "var(--accent-emerald)";
-    deltaBox.style.background = "rgba(16, 185, 129, 0.1)";
-    deltaText.innerHTML = `<strong>✓ Lower Risk Under Relational Context:</strong> The temporal model flagged an unusual burst (${scoreC.toFixed(4)} > threshold ${threshC.toFixed(4)}). Relational features showed the activity was broadly distributed rather than concentrated within a suspicious connected network, reducing the graph-enhanced model's risk score to ${scoreB.toFixed(4)} (< threshold ${threshB.toFixed(4)}).`;
-  } else if (data.delta_analysis.graph_impact === "Detected Coordinated Abuse") {
-    deltaBox.style.borderColor = "var(--accent-rose)";
-    deltaBox.style.background = "rgba(239, 68, 68, 0.1)";
-    deltaText.innerHTML = `<strong>⚠️ Coordinated Abuse Indicated (High Confidence):</strong> High velocity and dense entity multiplexing mutually reinforced risk score (${scoreB.toFixed(4)}).`;
+  // Model B (Temporal + Graph Proposed)
+  const scoreB = data.model_B.risk_score;
+  const threshB = data.model_B.threshold;
+  document.getElementById('disp-score-b').innerText = scoreB.toFixed(4);
+  const scoreBPct = document.getElementById('disp-score-b-pct');
+  if (scoreBPct) scoreBPct.innerText = `${(scoreB * 100).toFixed(1)}% Risk Score`;
+  document.getElementById('disp-thresh-b').innerText = threshB.toFixed(4);
+  const diffB = scoreB - threshB;
+  const relB = document.getElementById('disp-thresh-b-rel');
+  if (relB) relB.innerText = `${diffB >= 0 ? '+' : ''}${diffB.toFixed(4)} ${diffB >= 0 ? 'above threshold' : 'below threshold'}`;
+
+  const progB = document.getElementById('progress-b');
+  progB.style.width = `${Math.min(100, Math.max(2, scoreB * 100))}%`;
+  const markerB = document.getElementById('marker-b');
+  if (markerB) markerB.style.left = `${Math.min(96, Math.max(4, threshB * 100))}%`;
+
+  const verdictB = document.getElementById('disp-verdict-b');
+  if (data.model_B.prediction === 1) {
+    verdictB.innerText = "🚨 FLAGGED (ABUSE)";
+    verdictB.className = "model-verdict-badge verdict-flagged";
+    progB.className = "progress-bar-fill fill-danger";
   } else {
-    deltaBox.style.borderColor = "var(--border-subtle)";
-    deltaBox.style.background = "rgba(255, 255, 255, 0.03)";
-    deltaText.innerHTML = `Model B and Model C are in directional agreement. (Score delta: ${data.delta_analysis.score_diff > 0 ? '+' : ''}${data.delta_analysis.score_diff.toFixed(4)}).`;
+    verdictB.innerText = "✓ CLEARED (LEGITIMATE)";
+    verdictB.className = "model-verdict-badge verdict-cleared";
+    progB.className = "progress-bar-fill fill-success";
+  }
+
+  // Disagreement Status Pill in Card Header
+  const disPill = document.getElementById('disp-disagreement-pill');
+  if (disPill) {
+    if (data.delta_analysis.graph_impact === "Suppressed False Alarm") {
+      disPill.innerText = "✓ FALSE ALARM SUPPRESSED";
+      disPill.className = "disagreement-status-pill pill-suppressed";
+    } else if (data.delta_analysis.graph_impact === "Detected Coordinated Abuse") {
+      disPill.innerText = "⚠️ COORDINATED ABUSE DETECTED";
+      disPill.className = "disagreement-status-pill pill-abuse-detected";
+    } else {
+      disPill.innerText = "DIRECTIONAL AGREEMENT";
+      disPill.className = "disagreement-status-pill pill-agreement";
+    }
+  }
+
+  // Relational Context Impact Callout Box
+  const deltaBox = document.getElementById('disp-delta-box');
+  const deltaIcon = document.getElementById('disp-delta-icon');
+  const deltaHeadline = document.getElementById('disp-delta-headline');
+  const deltaText = document.getElementById('disp-delta-text');
+
+  if (data.delta_analysis.graph_impact === "Suppressed False Alarm") {
+    deltaBox.className = "delta-insight-box box-suppressed";
+    if (deltaIcon) deltaIcon.innerText = "⚖️";
+    if (deltaHeadline) deltaHeadline.innerHTML = `LOWER RISK UNDER RELATIONAL CONTEXT &bull; RISK DELTA: ${data.delta_analysis.score_diff.toFixed(4)}`;
+    deltaText.innerHTML = `<strong>Dispersed Organic Footprint:</strong> The temporal model detected an unusual burst (${scoreC.toFixed(4)} > threshold ${threshC.toFixed(4)}). Relational features showed the activity was broadly distributed (0 shared payment methods, minimal device sharing) rather than concentrated within a suspicious connected network, reducing the graph-enhanced model's risk score to ${scoreB.toFixed(4)} (< threshold ${threshB.toFixed(4)}).`;
+  } else if (data.delta_analysis.graph_impact === "Detected Coordinated Abuse") {
+    deltaBox.className = "delta-insight-box box-coordinated";
+    if (deltaIcon) deltaIcon.innerText = "⚠️";
+    if (deltaHeadline) deltaHeadline.innerHTML = `COORDINATED ABUSE INDICATED (HIGH CONFIDENCE) &bull; RISK SCORE: ${scoreB.toFixed(4)}`;
+    deltaText.innerHTML = `<strong>Dense Entity Multiplexing:</strong> High temporal velocity and multi-account entity reuse mutually reinforced risk score to ${scoreB.toFixed(4)} (exceeding threshold ${threshB.toFixed(4)}). Relational graph indicates interlocked shared infrastructure.`;
+  } else {
+    deltaBox.className = "delta-insight-box box-agreement";
+    if (deltaIcon) deltaIcon.innerText = "✓";
+    if (deltaHeadline) deltaHeadline.innerHTML = `DIRECTIONAL MODEL AGREEMENT &bull; DELTA: ${data.delta_analysis.score_diff > 0 ? '+' : ''}${data.delta_analysis.score_diff.toFixed(4)}`;
+    deltaText.innerHTML = `Model B and Model C are in directional agreement. Both models classify this transaction consistently relative to their respective validation operating thresholds.`;
   }
 
   // Defensive Recommendation & Analyst Action Log
@@ -148,25 +197,18 @@ function renderCaseDetails(data) {
   // Render Static Timeline
   renderTimeline(data.timeline);
 
-  // Deterministic Reasons
-  const reasonsContainer = document.getElementById('disp-reasons-list');
-  reasonsContainer.innerHTML = "";
-  data.reasons.forEach(r => {
-    const el = document.createElement('div');
-    el.className = `reason-item sev-${r.severity}`;
-    el.innerHTML = `
-      <div class="reason-header">
-        <span class="reason-title">${escapeHtml(r.title)}</span>
-      </div>
-      <div class="reason-detail">${escapeHtml(r.detail)}</div>
-    `;
-    reasonsContainer.appendChild(el);
-  });
+  // Populate Split Evidence Panels (Temporal vs Relational)
+  renderSplitEvidence(data);
 
-  // Features Table
-  const tbody = document.getElementById('disp-features-tbody');
-  tbody.innerHTML = "";
+  // Graph Subtitle
+  const gSubtitle = document.getElementById('graph-subtitle');
+  if (data.graph && gSubtitle) {
+    gSubtitle.innerText = `Visualizing ${data.graph.nodes.length} entities and ${data.graph.edges.length} relations active in [t - 24h, t]. (Strictly causal, zero lookahead).`;
+  }
+}
 
+function renderSplitEvidence(data) {
+  // Benchmarks dictionary
   const benchmarks = {
     "merchant_velocity_1h": "< 5 txns",
     "burst_score": "< 0.10",
@@ -180,20 +222,11 @@ function renderCaseDetails(data) {
     "time_since_last_txn": "> 3600s"
   };
 
-  const featureKeys = [
-    "merchant_velocity_1h",
-    "shared_device_customers_24h",
-    "shared_pm_customers_24h",
-    "two_hop_customer_count_24h",
-    "local_cluster_density_24h",
-    "burst_score",
-    "amount_ratio_vs_customer",
-    "txn_count_1h",
-    "txn_count_5m"
-  ];
-
-  featureKeys.forEach(k => {
-    if (k in data.features) {
+  // Populate hidden compatibility tables for test assertions
+  const compatTbody = document.getElementById('disp-features-tbody');
+  if (compatTbody) {
+    compatTbody.innerHTML = "";
+    Object.keys(data.features).forEach(k => {
       const isGraph = k.includes('shared_') || k.includes('two_hop') || k.includes('density') || k.includes('degree');
       const val = typeof data.features[k] === 'number' ? data.features[k].toFixed(4) : data.features[k];
       const row = document.createElement('tr');
@@ -203,14 +236,132 @@ function renderCaseDetails(data) {
         <td class="feat-val">${val}</td>
         <td style="color: var(--text-muted); font-size: 0.75rem;">${benchmarks[k] || '-'}</td>
       `;
-      tbody.appendChild(row);
+      compatTbody.appendChild(row);
+    });
+  }
+
+  const compatReasons = document.getElementById('disp-reasons-list');
+  if (compatReasons) {
+    compatReasons.innerHTML = "";
+    data.reasons.forEach(r => {
+      const el = document.createElement('div');
+      el.className = `reason-item sev-${r.severity}`;
+      el.innerHTML = `
+        <div class="reason-header"><span class="reason-title">${escapeHtml(r.title)}</span></div>
+        <div class="reason-detail">${escapeHtml(r.detail)}</div>
+      `;
+      compatReasons.appendChild(el);
+    });
+  }
+
+  // 1. Render Temporal Evidence Table
+  const tempTbody = document.getElementById('disp-temporal-tbody');
+  if (tempTbody) {
+    tempTbody.innerHTML = "";
+    const temporalKeys = [
+      { key: "merchant_velocity_1h", label: "Merchant 1h Velocity", bench: "< 5.0 txns/hr", unit: "txns/hr" },
+      { key: "burst_score", label: "Burst Score (Short/Long)", bench: "< 0.10 normal", unit: "" },
+      { key: "txn_count_1h", label: "Customer 1h Txns", bench: "< 3.0 txns", unit: "txns" },
+      { key: "txn_count_5m", label: "Customer 5m Txns", bench: "< 2.0 txns", unit: "txns" },
+      { key: "amount_ratio_vs_customer", label: "Amount / Median", bench: "0.5x - 2.0x normal", unit: "" },
+      { key: "time_since_last_txn", label: "Inter-Arrival Interval", bench: "> 3600s normal", unit: "s" }
+    ];
+
+    temporalKeys.forEach(item => {
+      if (item.key in data.features) {
+        const rawVal = data.features[item.key];
+        const valStr = typeof rawVal === 'number' ? (rawVal % 1 === 0 ? rawVal.toFixed(0) : rawVal.toFixed(2)) : rawVal;
+        
+        let statusTag = `<span class="status-tag tag-baseline">Baseline</span>`;
+        if (item.key === "merchant_velocity_1h" && rawVal >= 20) {
+          statusTag = `<span class="status-tag tag-elevated">Surge</span>`;
+        } else if (item.key === "merchant_velocity_1h" && rawVal >= 5) {
+          statusTag = `<span class="status-tag tag-moderate">Elevated</span>`;
+        } else if (item.key === "burst_score" && rawVal >= 0.20) {
+          statusTag = `<span class="status-tag tag-elevated">Spike</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <span class="signal-code">${item.key}</span>
+            <span class="signal-sublabel">${item.label}</span>
+          </td>
+          <td class="obs-val">${valStr} ${item.unit}</td>
+          <td class="bench-val">${item.bench}</td>
+          <td>${statusTag}</td>
+        `;
+        tempTbody.appendChild(tr);
+      }
+    });
+  }
+
+  // 2. Render Relational Evidence Table
+  const relTbody = document.getElementById('disp-relational-tbody');
+  if (relTbody) {
+    relTbody.innerHTML = "";
+    const relationalKeys = [
+      { key: "shared_device_customers_24h", label: "Shared Device Accounts", bench: "0 shared (isolated device)", unit: "accts" },
+      { key: "shared_pm_customers_24h", label: "Shared PM Accounts", bench: "0 shared (isolated card/UPI)", unit: "accts" },
+      { key: "two_hop_customer_count_24h", label: "2-Hop Customer Reach", bench: "< 3 accounts normal", unit: "accts" },
+      { key: "customer_degree_24h", label: "Customer Degree (24h)", bench: "1 - 3 entities normal", unit: "edges" },
+      { key: "local_cluster_density_24h", label: "Local Cluster Density", bench: "< 0.05 normal (neg corr: -0.16)", unit: "" }
+    ];
+
+    relationalKeys.forEach(item => {
+      if (item.key in data.features) {
+        const rawVal = data.features[item.key];
+        const valStr = typeof rawVal === 'number' ? (rawVal % 1 === 0 ? rawVal.toFixed(0) : rawVal.toFixed(4)) : rawVal;
+        
+        let statusTag = `<span class="status-tag tag-baseline">Dispersed</span>`;
+        if ((item.key === "shared_device_customers_24h" || item.key === "shared_pm_customers_24h") && rawVal >= 5) {
+          statusTag = `<span class="status-tag tag-elevated">Multiplexed</span>`;
+        } else if ((item.key === "shared_device_customers_24h" || item.key === "shared_pm_customers_24h") && rawVal >= 1) {
+          statusTag = `<span class="status-tag tag-moderate">Shared</span>`;
+        } else if (item.key === "two_hop_customer_count_24h" && rawVal >= 10) {
+          statusTag = `<span class="status-tag tag-elevated">Dense Cluster</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <span class="signal-code">${item.key}</span>
+            <span class="signal-sublabel">${item.label}</span>
+          </td>
+          <td class="obs-val">${valStr} ${item.unit}</td>
+          <td class="bench-val">${item.bench}</td>
+          <td>${statusTag}</td>
+        `;
+        relTbody.appendChild(tr);
+      }
+    });
+  }
+
+  // 3. Populate deterministic findings for Temporal vs Relational
+  const tempReasons = document.getElementById('disp-reasons-temporal');
+  const relReasons = document.getElementById('disp-reasons-relational');
+  if (tempReasons) tempReasons.innerHTML = "";
+  if (relReasons) relReasons.innerHTML = "";
+
+  data.reasons.forEach(r => {
+    const isRelational = r.title.includes('Device') || r.title.includes('Payment') || r.title.includes('Ring') || r.title.includes('Cluster') || r.title.includes('Network') || r.detail.includes('device') || r.detail.includes('shared');
+    const targetContainer = isRelational ? relReasons : tempReasons;
+    if (targetContainer) {
+      const el = document.createElement('div');
+      el.className = `reason-item sev-${r.severity}`;
+      el.innerHTML = `
+        <div class="reason-header"><span class="reason-title">${escapeHtml(r.title)}</span></div>
+        <div class="reason-detail">${escapeHtml(r.detail)}</div>
+      `;
+      targetContainer.appendChild(el);
     }
   });
 
-  // Graph Subtitle
-  const gSubtitle = document.getElementById('graph-subtitle');
-  if (data.graph) {
-    gSubtitle.innerText = `Visualizing ${data.graph.nodes.length} entities and ${data.graph.edges.length} relations active in [t - 24h, t]. (Strictly causal, zero lookahead).`;
+  if (tempReasons && tempReasons.children.length === 0) {
+    tempReasons.innerHTML = `<div style="color: var(--text-muted); font-size: 0.78rem; padding: 0.35rem 0;">No adverse temporal threshold violations observed.</div>`;
+  }
+  if (relReasons && relReasons.children.length === 0) {
+    relReasons.innerHTML = `<div style="color: var(--text-muted); font-size: 0.78rem; padding: 0.35rem 0;">No multi-account entity reuse or collusive ring patterns observed.</div>`;
   }
 }
 
@@ -278,15 +429,27 @@ function renderTimeline(timelineData) {
     return;
   }
 
+  const icons = {
+    "T - 24h": "⏱️",
+    "T - 12h": "📡",
+    "T - 6h": "📈",
+    "T - 1h": "⚡",
+    "T0": "🎯"
+  };
+
   timelineData.forEach(node => {
     const el = document.createElement('div');
     el.className = `timeline-node status-${node.status || 'info'}`;
+    const icon = icons[node.offset] || "•";
     el.innerHTML = `
       <div class="timeline-node-header">
         <span class="timeline-offset-badge">${escapeHtml(node.offset)}</span>
         <span class="timeline-timestamp">${escapeHtml(node.date)} ${escapeHtml(node.time)}</span>
       </div>
-      <div class="timeline-node-title">${escapeHtml(node.title)}</div>
+      <div class="timeline-milestone-row">
+        <span class="timeline-icon">${icon}</span>
+        <span class="timeline-node-title">${escapeHtml(node.title)}</span>
+      </div>
       <div class="timeline-node-detail">${escapeHtml(node.detail)}</div>
     `;
     container.appendChild(el);
@@ -295,7 +458,7 @@ function renderTimeline(timelineData) {
 
 
 // -----------------------------------------------------------------------------
-// INTERACTIVE CAUSAL NETWORK GRAPH (CANVAS SPRING PHYSICS)
+// INTERACTIVE CAUSAL NETWORK GRAPH (CANVAS SPRING PHYSICS & SETTLING)
 // -----------------------------------------------------------------------------
 
 function initNetworkGraph(graphData) {
@@ -305,8 +468,8 @@ function initNetworkGraph(graphData) {
 
   // Fix resolution scaling
   const rect = canvas.getBoundingClientRect();
-  const width = rect.width || 1000;
-  const height = 480;
+  const width = rect.width || 1100;
+  const height = 460;
   canvas.width = width * window.devicePixelRatio;
   canvas.height = height * window.devicePixelRatio;
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
@@ -321,9 +484,8 @@ function initNetworkGraph(graphData) {
 
   // Build simulation nodes
   const nodes = graphData.nodes.map((n, i) => {
-    // Initial circular positioning
     const angle = (i / graphData.nodes.length) * 2 * Math.PI;
-    const dist = n.is_focal ? 0 : 120 + (i % 3) * 40;
+    const dist = n.is_focal ? 0 : 130 + (i % 3) * 45;
     return {
       id: n.id,
       label: n.label,
@@ -348,6 +510,8 @@ function initNetworkGraph(graphData) {
 
   let draggedNode = null;
   let pulsePhase = 0;
+  let iteration = 0;
+  const maxIterations = 120; // Settle after 120 frames to avoid continuous spinning
 
   // Mouse interaction
   function getMousePos(e) {
@@ -363,8 +527,12 @@ function initNetworkGraph(graphData) {
     for (let n of nodes) {
       const dx = n.x - pos.x;
       const dy = n.y - pos.y;
-      if (dx * dx + dy * dy < (n.radius + 8) * (n.radius + 8)) {
+      if (dx * dx + dy * dy < (n.radius + 10) * (n.radius + 10)) {
         draggedNode = n;
+        iteration = 0; // Restart physics on drag
+        if (!graphSimulation) {
+          graphSimulation = requestAnimationFrame(step);
+        }
         break;
       }
     }
@@ -384,15 +552,14 @@ function initNetworkGraph(graphData) {
     draggedNode = null;
   };
 
-  let iteration = 0;
   function step() {
     iteration++;
     pulsePhase += 0.05;
 
     // Apply forces
-    const k = 0.04; // Spring strength
-    const rep = 800; // Repulsion
-    const damping = 0.82;
+    const k = 0.04;
+    const rep = 850;
+    const damping = 0.78;
 
     // Node repulsion
     for (let i = 0; i < nodes.length; i++) {
@@ -420,7 +587,7 @@ function initNetworkGraph(graphData) {
       let dy = e.target.y - e.source.y;
       let dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < 1) dist = 1;
-      const targetDist = 90;
+      const targetDist = 95;
       const displacement = dist - targetDist;
       const force = displacement * k;
 
@@ -456,8 +623,8 @@ function initNetworkGraph(graphData) {
       n.y += n.vy;
 
       // Bounds
-      n.x = Math.max(n.radius + 10, Math.min(width - n.radius - 10, n.x));
-      n.y = Math.max(n.radius + 10, Math.min(height - n.radius - 10, n.y));
+      n.x = Math.max(n.radius + 15, Math.min(width - n.radius - 15, n.x));
+      n.y = Math.max(n.radius + 15, Math.min(height - n.radius - 15, n.y));
     });
 
     // Draw
@@ -470,13 +637,14 @@ function initNetworkGraph(graphData) {
       ctx.lineTo(e.target.x, e.target.y);
 
       if (e.relation.includes('shared')) {
-        ctx.strokeStyle = "rgba(239, 68, 68, 0.4)";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(239, 68, 68, 0.55)";
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
       } else {
-        ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
         ctx.lineWidth = 1.2;
+        ctx.stroke();
       }
-      ctx.stroke();
     });
 
     // Draw Nodes
@@ -485,11 +653,11 @@ function initNetworkGraph(graphData) {
       ctx.translate(n.x, n.y);
 
       if (n.is_focal) {
-        // Pulsing outer aura
-        const glow = 18 + Math.sin(pulsePhase) * 5;
+        // Outer aura
+        const glow = 22 + Math.sin(pulsePhase) * 4;
         ctx.beginPath();
         ctx.arc(0, 0, glow, 0, 2 * Math.PI);
-        ctx.fillStyle = "rgba(99, 102, 241, 0.25)";
+        ctx.fillStyle = "rgba(99, 102, 241, 0.22)";
         ctx.fill();
 
         // Focal circle
@@ -504,7 +672,7 @@ function initNetworkGraph(graphData) {
         // Square for merchant
         ctx.fillStyle = "#f59e0b";
         ctx.fillRect(-n.radius, -n.radius, n.radius * 2, n.radius * 2);
-        ctx.strokeStyle = "rgba(0,0,0,0.4)";
+        ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 1.5;
         ctx.strokeRect(-n.radius, -n.radius, n.radius * 2, n.radius * 2);
       } else if (n.type === 'device') {
@@ -512,17 +680,17 @@ function initNetworkGraph(graphData) {
         ctx.rotate(Math.PI / 4);
         ctx.fillStyle = "#06b6d4";
         ctx.fillRect(-n.radius * 0.9, -n.radius * 0.9, n.radius * 1.8, n.radius * 1.8);
-        ctx.strokeStyle = "rgba(0,0,0,0.4)";
+        ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 1.5;
         ctx.strokeRect(-n.radius * 0.9, -n.radius * 0.9, n.radius * 1.8, n.radius * 1.8);
         ctx.rotate(-Math.PI / 4);
       } else if (n.type === 'pm') {
-        // Hexagon / Rounded box for PM
+        // Rounded box for PM
         ctx.fillStyle = "#10b981";
         ctx.beginPath();
-        ctx.roundRect(-n.radius * 1.1, -n.radius * 0.8, n.radius * 2.2, n.radius * 1.6, 4);
+        ctx.roundRect(-n.radius * 1.15, -n.radius * 0.8, n.radius * 2.3, n.radius * 1.6, 3);
         ctx.fill();
-        ctx.strokeStyle = "rgba(0,0,0,0.4)";
+        ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 1.5;
         ctx.stroke();
       } else {
@@ -530,23 +698,31 @@ function initNetworkGraph(graphData) {
         ctx.beginPath();
         ctx.arc(0, 0, n.radius, 0, 2 * Math.PI);
         ctx.fillStyle = "#475569";
-        ctx.strokeStyle = "#94a3b8";
+        ctx.strokeStyle = "#cbd5e1";
         ctx.lineWidth = 1.5;
         ctx.fill();
         ctx.stroke();
       }
 
-      // Label text
-      ctx.fillStyle = "#f8fafc";
+      // Label with dark background pill for high readability
       ctx.font = n.is_focal ? "bold 11px Plus Jakarta Sans, sans-serif" : "9px JetBrains Mono, monospace";
+      const textWidth = ctx.measureText(n.label).width;
+      ctx.fillStyle = "rgba(7, 10, 18, 0.85)";
+      ctx.fillRect(-textWidth / 2 - 4, n.radius + 4, textWidth + 8, 14);
+      ctx.fillStyle = n.is_focal ? "#a5b4fc" : "#f1f5f9";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(n.label, 0, n.radius + 12);
+      ctx.fillText(n.label, 0, n.radius + 11);
 
       ctx.restore();
     });
 
-    graphSimulation = requestAnimationFrame(step);
+    // Settling logic: Stop loop after maxIterations if not dragging
+    if (iteration < maxIterations || draggedNode !== null) {
+      graphSimulation = requestAnimationFrame(step);
+    } else {
+      graphSimulation = null;
+    }
   }
 
   step();

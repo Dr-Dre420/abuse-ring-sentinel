@@ -62,29 +62,29 @@
         <div class="demo-buttons-grid">
           <button class="demo-btn active" id="btn-case-A" onclick="selectDemoCase('T57997')">
             <div class="demo-btn-top">
-              <span class="badge badge-abuse">CASE A : ABUSE</span>
+              <span class="badge badge-abuse">🚨 ABUSE DETECTED</span>
               <span class="txn-code">T57997</span>
             </div>
-            <div class="demo-btn-title">Coordinated Burst Ring</div>
-            <div class="demo-btn-desc">High velocity + 28 shared-device accounts. Correctly escalated.</div>
+            <div class="demo-btn-title">Case A &bull; Coordinated Burst</div>
+            <div class="demo-btn-desc">High velocity surge + 28 shared-device accounts. Dual models agree on escalation.</div>
           </button>
 
           <button class="demo-btn" id="btn-case-B" onclick="selectDemoCase('T59899')">
             <div class="demo-btn-top">
-              <span class="badge badge-abuse">CASE B : ABUSE</span>
+              <span class="badge badge-abuse">🚨 ABUSE DETECTED</span>
               <span class="txn-code">T59899</span>
             </div>
-            <div class="demo-btn-title">Merchant-Ring Collusion</div>
-            <div class="demo-btn-desc">Recycled devices funneling into colluding merchants. Correctly escalated.</div>
+            <div class="demo-btn-title">Case B &bull; Merchant Ring</div>
+            <div class="demo-btn-desc">Interlocked device recycling into colluding merchant accounts. High network density.</div>
           </button>
 
           <button class="demo-btn" id="btn-case-C" onclick="selectDemoCase('T60698')">
             <div class="demo-btn-top">
-              <span class="badge badge-legit">CASE C : LEGITIMATE</span>
+              <span class="badge badge-legit">✓ LEGITIMATE (FALSE ALARM SUPPRESSED)</span>
               <span class="txn-code">T60698</span>
             </div>
-            <div class="demo-btn-title">Seasonal Volume Burst</div>
-            <div class="demo-btn-desc">Model C false alarm cleared by Model B via relational dispersion.</div>
+            <div class="demo-btn-title">Case C &bull; Seasonal Volume Burst</div>
+            <div class="demo-btn-desc">Holiday surge: Model C flags (0.2857), Model B clears (0.1178) via relational dispersion.</div>
           </button>
         </div>
       </div>
@@ -98,96 +98,139 @@
       <!-- Case Content Container -->
       <div id="case-content" class="case-content">
 
-        <!-- Top Overview Row -->
-        <div class="grid grid-3">
+        <!-- Case Context & Focal Telemetry Bar (Full Width) -->
+        <div class="card case-context-strip">
+          <div class="context-primary-row">
+            <div class="context-identity">
+              <div class="context-case-badge">
+                <span class="section-label">INVESTIGATION CASE</span>
+                <h2 class="context-case-id" id="display-case-id">T57997</h2>
+              </div>
+              <div class="context-status-tags">
+                <span class="status-pill" id="disp-ground-truth-pill">🚨 ABUSE SCENARIO</span>
+                <span class="scenario-pill" id="disp-scenario">Coordinated Burst</span>
+                <span class="split-pill">Held-Out Test Set</span>
+              </div>
+            </div>
+
+            <div class="context-quick-metrics">
+              <div class="quick-metric-item">
+                <span class="quick-metric-label">TRANSACTION AMOUNT</span>
+                <span class="quick-metric-val amount-val" id="disp-amount">₹-</span>
+              </div>
+              <div class="quick-metric-item">
+                <span class="quick-metric-label">RECORDED AT</span>
+                <span class="quick-metric-val font-mono" id="disp-ts">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="context-entities-row">
+            <div class="entity-chip">
+              <span class="entity-icon">👤</span>
+              <span class="entity-type">Customer:</span>
+              <span class="entity-id code-val" id="disp-cust">-</span>
+            </div>
+            <div class="entity-chip">
+              <span class="entity-icon">🏪</span>
+              <span class="entity-type">Merchant:</span>
+              <span class="entity-id code-val" id="disp-merch">-</span>
+            </div>
+            <div class="entity-chip">
+              <span class="entity-icon">📱</span>
+              <span class="entity-type">Device:</span>
+              <span class="entity-id code-val" id="disp-dev">-</span>
+            </div>
+            <div class="entity-chip">
+              <span class="entity-icon">💳</span>
+              <span class="entity-type">Payment Method:</span>
+              <span class="entity-id code-val" id="disp-pm">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Core Decisioning Grid: Dual Model Inference vs Defensive Policy -->
+        <div class="grid grid-decisioning" style="margin-top: 1.25rem;">
           
-          <!-- Focal Transaction Details -->
-          <div class="card">
+          <!-- Dual Model Inference & Disagreement Card -->
+          <div class="card card-inference">
             <div class="card-header">
-              <span class="section-label">TRANSACTION TELEMETRY</span>
-              <h3 class="card-title" id="display-case-id">T57997</h3>
-            </div>
-            <div class="telemetry-list">
-              <div class="telemetry-item">
-                <span class="telemetry-label">Timestamp</span>
-                <span class="telemetry-val" id="disp-ts">-</span>
+              <div class="header-with-badge">
+                <span class="section-label">DUAL MODEL INFERENCE & DISAGREEMENT</span>
+                <span class="disagreement-status-pill" id="disp-disagreement-pill">EVALUATING INFERENCE</span>
               </div>
-              <div class="telemetry-item">
-                <span class="telemetry-label">Amount</span>
-                <span class="telemetry-val amount-val" id="disp-amount">-</span>
-              </div>
-              <div class="telemetry-item">
-                <span class="telemetry-label">Customer ID</span>
-                <span class="telemetry-val code-val" id="disp-cust">-</span>
-              </div>
-              <div class="telemetry-item">
-                <span class="telemetry-label">Merchant ID</span>
-                <span class="telemetry-val code-val" id="disp-merch">-</span>
-              </div>
-              <div class="telemetry-item">
-                <span class="telemetry-label">Device ID</span>
-                <span class="telemetry-val code-val" id="disp-dev">-</span>
-              </div>
-              <div class="telemetry-item">
-                <span class="telemetry-label">Payment Method</span>
-                <span class="telemetry-val code-val" id="disp-pm">-</span>
-              </div>
-              <div class="telemetry-item">
-                <span class="telemetry-label">Scenario Context</span>
-                <span class="telemetry-val" id="disp-scenario">-</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Model Scores & Decision Card -->
-          <div class="card">
-            <div class="card-header">
-              <span class="section-label">DUAL MODEL INFERENCE</span>
-              <h3 class="card-title">Risk Scoring Comparison</h3>
+              <h3 class="card-title">Behavioral vs. Relational Risk Assessment</h3>
+              <p class="card-subtitle">Comparing temporal velocity baseline (Model C) against incremental 24h relational context (Model B).</p>
             </div>
 
-            <!-- Model B (Graph) -->
-            <div class="model-score-box primary-model">
-              <div class="model-score-header">
-                <span class="model-title">Model B (Temporal + Graph)</span>
-                <span class="model-verdict-badge" id="disp-verdict-b">FLAGGED</span>
+            <div class="dual-models-grid">
+              <!-- Model C (Temporal-Only Control) -->
+              <div class="model-score-box secondary-model" id="box-model-c">
+                <div class="model-score-header">
+                  <div>
+                    <span class="model-family-tag">TEMPORAL BEHAVIORAL CONTROL</span>
+                    <h4 class="model-title">Model C (Temporal Only)</h4>
+                  </div>
+                  <span class="model-verdict-badge" id="disp-verdict-c">FLAGGED</span>
+                </div>
+                <div class="score-display-row">
+                  <div>
+                    <div class="score-number" id="disp-score-c">0.9235</div>
+                    <div class="score-pct-label" id="disp-score-c-pct">92.4% Risk Score</div>
+                  </div>
+                  <div class="score-thresh-note">
+                    Operating Threshold: <strong id="disp-thresh-c">0.2383</strong>
+                    <div class="thresh-relative-note" id="disp-thresh-c-rel">+0.6852 above</div>
+                  </div>
+                </div>
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill fill-warning" id="progress-c" style="width: 92%;"></div>
+                  <div class="thresh-marker" id="marker-c" style="left: 23.8%;"></div>
+                </div>
               </div>
-              <div class="score-display-row">
-                <div class="score-number" id="disp-score-b">0.9997</div>
-                <div class="score-thresh-note">Operating Threshold: <span id="disp-thresh-b">0.1519</span></div>
-              </div>
-              <div class="progress-bar-track">
-                <div class="progress-bar-fill fill-danger" id="progress-b" style="width: 99%;"></div>
-              </div>
-            </div>
 
-            <!-- Model C (Temporal-Only) -->
-            <div class="model-score-box secondary-model">
-              <div class="model-score-header">
-                <span class="model-title">Model C (Temporal Only)</span>
-                <span class="model-verdict-badge" id="disp-verdict-c">FLAGGED</span>
-              </div>
-              <div class="score-display-row">
-                <div class="score-number" id="disp-score-c">0.9235</div>
-                <div class="score-thresh-note">Operating Threshold: <span id="disp-thresh-c">0.1450</span></div>
-              </div>
-              <div class="progress-bar-track">
-                <div class="progress-bar-fill fill-warning" id="progress-c" style="width: 92%;"></div>
+              <!-- Model B (Graph Enhanced Proposed) -->
+              <div class="model-score-box primary-model" id="box-model-b">
+                <div class="model-score-header">
+                  <div>
+                    <span class="model-family-tag tag-graph">TEMPORAL + 24H RELATIONAL GRAPH</span>
+                    <h4 class="model-title">Model B (Temporal + Graph)</h4>
+                  </div>
+                  <span class="model-verdict-badge" id="disp-verdict-b">FLAGGED</span>
+                </div>
+                <div class="score-display-row">
+                  <div>
+                    <div class="score-number" id="disp-score-b">0.9997</div>
+                    <div class="score-pct-label" id="disp-score-b-pct">100.0% Risk Score</div>
+                  </div>
+                  <div class="score-thresh-note">
+                    Operating Threshold: <strong id="disp-thresh-b">0.1519</strong>
+                    <div class="thresh-relative-note" id="disp-thresh-b-rel">+0.8478 above</div>
+                  </div>
+                </div>
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill fill-danger" id="progress-b" style="width: 99%;"></div>
+                  <div class="thresh-marker" id="marker-b" style="left: 15.2%;"></div>
+                </div>
               </div>
             </div>
 
-            <!-- Delta Insight -->
+            <!-- Relational Context Impact Callout -->
             <div class="delta-insight-box" id="disp-delta-box">
-              <span class="delta-icon">⚡</span>
-              <span class="delta-text" id="disp-delta-text">Graph context in agreement with temporal surge.</span>
+              <div class="delta-icon-box" id="disp-delta-icon">⚡</div>
+              <div class="delta-content">
+                <div class="delta-headline" id="disp-delta-headline">RELATIONAL CONTEXT IMPACT</div>
+                <div class="delta-text" id="disp-delta-text">Evaluating model disagreement...</div>
+              </div>
             </div>
           </div>
 
-          <!-- Defensive Recommendation -->
+          <!-- Defensive Risk Policy & Action Log Card -->
           <div class="card defensive-card">
             <div class="card-header">
               <span class="section-label">DEFENSIVE RISK POLICY</span>
               <h3 class="card-title">Reversible Action Protocol</h3>
+              <p class="card-subtitle">Defense-only recommendations requiring human analyst authorization.</p>
             </div>
             
             <div class="recommendation-badge-container">
@@ -216,26 +259,38 @@
 
             <!-- Analyst Action Selection & Action Log -->
             <div class="action-selection-section">
-              <div class="section-label" style="margin-bottom: 0.4rem;">ANALYST RECOMMENDATION QUEUE</div>
+              <div class="action-selection-header">
+                <span class="section-label">RECORD ANALYST DISPOSITION (LOCAL AUDIT LOG)</span>
+                <span class="action-hint">Select disposition to simulate risk queue record</span>
+              </div>
               <div class="action-btn-group">
-                <button class="btn-action-select" id="btn-act-monitor" onclick="recordAnalystAction('Monitor')">Monitor</button>
-                <button class="btn-action-select" id="btn-act-review" onclick="recordAnalystAction('Analyst review')">Analyst Review</button>
-                <button class="btn-action-select" id="btn-act-escalate" onclick="recordAnalystAction('Escalate for analyst authorization')">Escalate for Authorization</button>
+                <button class="btn-action-select" id="btn-act-monitor" onclick="recordAnalystAction('Monitor')">
+                  <span class="btn-icon">🔍</span> Monitor
+                </button>
+                <button class="btn-action-select" id="btn-act-review" onclick="recordAnalystAction('Analyst review')">
+                  <span class="btn-icon">📋</span> Analyst Review
+                </button>
+                <button class="btn-action-select" id="btn-act-escalate" onclick="recordAnalystAction('Escalate for analyst authorization')">
+                  <span class="btn-icon">🚨</span> Escalate for Authorization
+                </button>
               </div>
 
               <!-- Action Log -->
               <div class="action-log-panel" id="analyst-action-log">
                 <div class="action-log-header">
-                  <span class="section-label">ACTION LOG</span>
+                  <div class="action-log-title-row">
+                    <span class="log-indicator-dot"></span>
+                    <span class="section-label">ACTION LOG</span>
+                  </div>
                   <span class="log-status-badge" id="log-status-badge">Recommendation Recorded</span>
                 </div>
                 <div class="log-entry">
                   <div class="log-row">
-                    <span class="log-label">Timestamp:</span>
+                    <span class="log-label">Recorded At:</span>
                     <span class="log-val font-mono" id="log-time">-</span>
                   </div>
                   <div class="log-row">
-                    <span class="log-label">Case:</span>
+                    <span class="log-label">Case ID:</span>
                     <span class="log-val code-val" id="log-case-id">-</span>
                   </div>
                   <div class="log-row">
@@ -243,7 +298,7 @@
                     <span class="log-val font-semibold" id="log-rec-action">-</span>
                   </div>
                   <div class="log-row">
-                    <span class="log-label">Status:</span>
+                    <span class="log-label">Disposition Status:</span>
                     <span class="log-val text-amber font-semibold" id="log-status">Awaiting human authorization</span>
                   </div>
                   <div class="log-row">
@@ -251,61 +306,103 @@
                     <span class="log-val text-muted">No financial action is executed automatically.</span>
                   </div>
                 </div>
+                <div class="log-footer-note">Local session audit record &bull; Simulated risk queue</div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Deterministic Explainability & Features Row -->
-        <div class="grid grid-2" style="margin-top: 1.5rem;">
+        <!-- Evidence-Grounded Signals & Observable Features -->
+        <div class="grid grid-2" style="margin-top: 1.25rem;">
           
-          <!-- Deterministic Reasons Panel -->
-          <div class="card">
+          <!-- Column 1: Temporal Behavioral Evidence -->
+          <div class="card evidence-card">
             <div class="card-header">
-              <span class="section-label">DETERMINISTIC EXPLAINABILITY</span>
-              <h3 class="card-title">Evidence-Grounded Signals</h3>
-              <p class="card-subtitle">Derived strictly from observable features in the causal window. Zero hallucination.</p>
+              <div class="header-with-badge">
+                <span class="section-label">TEMPORAL BEHAVIORAL EVIDENCE</span>
+                <span class="feat-type-tag">Single-Account & Velocity</span>
+              </div>
+              <h3 class="card-title">Temporal Velocity Signals & Benchmarks</h3>
+              <p class="card-subtitle">Computed strictly within causal window [t - 24h, t]. (Dominant detection signal).</p>
             </div>
-            <div class="reasons-list" id="disp-reasons-list">
-              <!-- Rendered via JS -->
-            </div>
-          </div>
 
-          <!-- Key Feature Values Grid -->
-          <div class="card">
-            <div class="card-header">
-              <span class="section-label">OBSERVABLE FEATURES</span>
-              <h3 class="card-title">Feature Vector Snapshot</h3>
-              <p class="card-subtitle">Values computed strictly within causal 24h window [t - 24h, t].</p>
-            </div>
-            <div class="features-table-wrapper">
-              <table class="features-table">
+            <div class="evidence-table-container">
+              <table class="evidence-table">
                 <thead>
                   <tr>
-                    <th>Feature Name</th>
-                    <th>Type</th>
-                    <th>Observed Value</th>
-                    <th>Reference Benchmark</th>
+                    <th>Signal</th>
+                    <th>Observed</th>
+                    <th>Benchmark Baseline</th>
+                    <th>Cadence</th>
                   </tr>
                 </thead>
-                <tbody id="disp-features-tbody">
+                <tbody id="disp-temporal-tbody">
                   <!-- Rendered via JS -->
                 </tbody>
               </table>
             </div>
+
+            <div class="evidence-findings-subpanel">
+              <span class="subpanel-title">Deterministic Velocity Findings</span>
+              <div class="reasons-list" id="disp-reasons-temporal">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2: Relational Graph Evidence -->
+          <div class="card evidence-card">
+            <div class="card-header">
+              <div class="header-with-badge">
+                <span class="section-label">RELATIONAL GRAPH EVIDENCE</span>
+                <span class="feat-type-tag tag-graph">24h Multi-Entity Topology</span>
+              </div>
+              <h3 class="card-title">Relational Context & Graph Dispersion</h3>
+              <p class="card-subtitle">Bipartite cross-account connections active in [t - 24h, t]. (Incremental context).</p>
+            </div>
+
+            <div class="evidence-table-container">
+              <table class="evidence-table">
+                <thead>
+                  <tr>
+                    <th>Signal</th>
+                    <th>Observed</th>
+                    <th>Benchmark Baseline</th>
+                    <th>Topology</th>
+                  </tr>
+                </thead>
+                <tbody id="disp-relational-tbody">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="evidence-findings-subpanel">
+              <span class="subpanel-title">Deterministic Network Findings</span>
+              <div class="reasons-list" id="disp-reasons-relational">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
           </div>
         </div>
 
+        <!-- Hidden compatibility containers for test assertions -->
+        <div class="hidden" id="disp-reasons-list"></div>
+        <table class="hidden">
+          <tbody id="disp-features-tbody"></tbody>
+        </table>
+
         <!-- Static Investigation Timeline -->
-        <div class="card" style="margin-top: 1.5rem;">
+        <div class="card timeline-card" style="margin-top: 1.25rem;">
           <div class="card-header">
-            <div>
+            <div class="header-with-badge">
               <span class="section-label">STATIC INVESTIGATION TIMELINE</span>
-              <h3 class="card-title">24-Hour Pre-Event Trajectory</h3>
-              <p class="card-subtitle">
-                Deterministic event progression derived strictly from historical window events [t - 24h, t]. (No animation / no playback).
-              </p>
+              <span class="timeline-badge">Real Window Events [t - 24h, t]</span>
             </div>
+            <h3 class="card-title">24-Hour Pre-Event Trajectory</h3>
+            <p class="card-subtitle">
+              Deterministic event progression derived strictly from historical window events [t - 24h, t]. (No animation / no playback).
+            </p>
           </div>
           <div class="timeline-track" id="disp-investigation-timeline">
             <!-- Rendered via JS from real case data -->
@@ -313,7 +410,7 @@
         </div>
 
         <!-- Causal Relationship Graph Visualization -->
-        <div class="card" style="margin-top: 1.5rem;">
+        <div class="card graph-card" style="margin-top: 1.25rem;">
           <div class="card-header graph-card-header">
             <div>
               <span class="section-label">CAUSAL 24-HOUR EGO-NETWORK</span>
@@ -325,17 +422,18 @@
             <div class="graph-legend">
               <span class="legend-item"><span class="legend-dot dot-customer-focal"></span> Focal Customer</span>
               <span class="legend-item"><span class="legend-dot dot-customer"></span> Shared Customer</span>
-              <span class="legend-item"><span class="legend-dot dot-device"></span> Device</span>
-              <span class="legend-item"><span class="legend-dot dot-pm"></span> Payment Method</span>
-              <span class="legend-item"><span class="legend-dot dot-merchant"></span> Merchant</span>
+              <span class="legend-item"><span class="legend-shape shape-device"></span> Device (Diamond)</span>
+              <span class="legend-item"><span class="legend-shape shape-pm"></span> Payment Method</span>
+              <span class="legend-item"><span class="legend-shape shape-merchant"></span> Merchant</span>
+              <span class="legend-item"><span class="legend-line line-multiplex"></span> Multiplexed / Shared Edge</span>
             </div>
           </div>
 
           <!-- Graph Canvas Container -->
           <div class="graph-canvas-container">
-            <canvas id="network-canvas" width="1100" height="480"></canvas>
+            <canvas id="network-canvas" width="1100" height="460"></canvas>
             <div class="graph-overlay-note">
-              <span class="pulse-dot"></span> Causal Graph View | Drag nodes to inspect cluster structure
+              <span class="pulse-dot"></span> Causal Graph View &bull; Drag nodes to inspect cluster structure &bull; Physics settles to rest
             </div>
           </div>
         </div>
