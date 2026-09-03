@@ -1,16 +1,33 @@
 # Abuse-Ring Sentinel: Temporal Behavioral Risk Detector with Causal 24-Hour Relational Graph
 
 > **Track**: Razorpay AI Risk Manager  
+> **Repository**: [https://github.com/Dr-Dre420/abuse-ring-sentinel](https://github.com/Dr-Dre420/abuse-ring-sentinel)  
 > **Methodology Status**: Frozen & Scientifically Audited (P0 – P1.7 Complete)  
 > **Evaluation Nature**: Synthetic Evaluation; Not a Production Benchmark.  
-> **Safety Notice**: This system is defense-only. The model identifies and explains risk; it does not generate attacks. No financial action is executed automatically.
+> **Safety Notice**: Defense-only risk intelligence. All defensive recommendations require human analyst authorization. No financial action is executed automatically.
 
 ---
 
-## 1. Project Summary
-**Abuse-Ring Sentinel** is a defense-only payment risk detection system engineered to uncover coordinated abuse without imposing destructive friction on legitimate merchant burst volume. **Temporal behavioral signals provide the primary detection power**, while a **causal 24-hour relational graph adds incremental context that is especially useful for distinguishing legitimate burst traffic from coordinated activity** — achieving a **51.9% relative reduction in seasonal-burst false-positive rate across the three evaluation seeds**. 
+## Demo
 
-The system does not execute financial actions automatically; all outputs are reversible recommendations requiring human analyst authorization.
+### Coordinated Abuse Investigation (Case A)
+![Case A Investigation](assets/screenshots/case_a_investigation.png)
+
+### Temporal vs. Relational Context (Case C Disagreement)
+![Case C Disagreement](assets/screenshots/case_c_disagreement.png)
+
+### Model Evaluation Dashboard
+![Model Evaluation](assets/screenshots/model_evaluation.png)
+
+---
+
+## 1. Project Summary & Thesis
+**Abuse-Ring Sentinel** is a defense-only payment risk detection system engineered to uncover coordinated abuse without imposing destructive friction on legitimate merchant burst volume. 
+
+**Core Hypothesis & Technical Finding**:
+- **Temporal behavioral signals provide the primary detection power** (~81% feature importance from 1-hour merchant velocity).
+- A **causal 24-hour relational graph adds incremental context that is particularly useful for distinguishing legitimate burst traffic from coordinated activity** in our synthetic evaluation — achieving a **51.9% relative reduction in seasonal-burst false-positive rate across the three evaluation seeds** (29.17% in Model C down to 14.03% in Model B).
+- The system operates strictly defense-only; all outputs are reversible recommendations requiring human analyst authorization before any financial action is taken.
 
 ---
 
@@ -23,7 +40,7 @@ Abuse-Ring Sentinel solves this tradeoff: temporal velocity detects the surge, w
 
 ---
 
-## 3. Architecture Diagram
+## 3. Architecture
 
 ```
                               Live Transaction Request [t]
@@ -66,7 +83,7 @@ Abuse-Ring Sentinel solves this tradeoff: temporal velocity detects the surge, w
 
 ---
 
-## 4. Synthetic Data Generation Summary
+## 4. Synthetic Data Generation & Disclosure
 To test network hypotheses under controlled conditions, a multi-scenario synthetic dataset generator was implemented in `src/data.py`:
 - **Total Transactions**: 69,270 transactions over 90 days.
 - **Entity Pools**: 2,000 customers, 100 merchants, 1,000 devices, 2,500 payment methods.
@@ -81,19 +98,11 @@ To test network hypotheses under controlled conditions, a multi-scenario synthet
   - **Validation**: 20% (14,713 transactions)
   - **Held-Out Test**: 20% (14,801 transactions)
 
----
-
-## 5. Modeling Methodology
-The investigation benchmarks three strictly controlled model configurations:
-1. **Model A (P0 Baseline)**: Logistic Regression with `class_weight='balanced'` on temporal behavioral features.
-2. **Model C (P1.5 Temporal Control)**: XGBoost trained exclusively on temporal features (`max_depth=4`, `learning_rate=0.1`, `scale_pos_weight` tuned on train).
-3. **Model B (P1/P1.7 Proposed)**: XGBoost trained on the fused feature space (`temporal_features` + `graph_features`).
-
-Thresholds are selected **strictly on the validation set** to minimize expected financial cost under the operational constraint $\text{Recall} \ge 0.80$, then frozen for evaluation on the held-out test set.
+> **Synthetic Evaluation Disclosure**: This project is a synthetic evaluation, not a production benchmark. The generator was hardened after discovering artificial device/PM sharing artifacts during audit. In production environments, real-world traffic contains missing attributes, network obfuscation, residential proxy rotations, and behavioural noise not present in synthetic generation.
 
 ---
 
-## 6. Temporal Leakage Controls
+## 5. Temporal Leakage Controls
 A primary finding of the P1.7 audit was resolving a zero-second lookahead bug in the incremental feature extractor:
 - **Pre-Event Feature Computation**: For any transaction at timestamp $t$, graph features are computed from the historical graph state **before** the transaction's edges are committed to the graph. This guarantees that customer degree and local density are purely historical pre-event properties.
 - **Incremental Sliding Window**: Transactions outside $[t - 24\text{h}, t]$ are evicted from the active `networkx` graph using a streaming FIFO queue (`collections.deque`).
@@ -102,7 +111,7 @@ A primary finding of the P1.7 audit was resolving a zero-second lookahead bug in
 
 ---
 
-## 7. Graph Methodology & Features
+## 6. Graph Methodology & Features
 The causal graph is modeled as a multi-entity bipartite network $G = (V, E)$ where $V = C \cup M \cup D \cup P$ (Customers, Merchants, Devices, Payment Methods) and $E = \{(c, m), (c, d), (c, p)\}$ represent transaction events.
 
 Five causal graph features are extracted for each event:
@@ -116,19 +125,50 @@ Five causal graph features are extracted for each event:
 
 ---
 
-## 8. Model C vs Model B Evaluation
+## 7. Model Methodology & Model Ladder
+The investigation establishes a controlled model ladder across three configurations:
+
+1. **Model A (P0 Interpretable Baseline Floor)**: Logistic Regression with `class_weight='balanced'` trained exclusively on temporal behavioral features.
+   - *Purpose*: Provides the simplest linear baseline floor to measure whether non-linear gradient boosted trees add value.
+2. **Model C (P1.5 Controlled Temporal Baseline)**: XGBoost (`max_depth=4`, `learning_rate=0.1`, `scale_pos_weight` tuned on train) trained exclusively on temporal behavioral features.
+   - *Purpose*: The primary fair baseline control.
+3. **Model B (P1/P1.7 Proposed Graph-Enhanced Model)**: XGBoost sharing identical hyperparameters and temporal features as Model C, with 5 incremental 24-hour causal graph features added.
+   - *Purpose*: Isolates the precise incremental contribution of relational graph topology.
+
+> **Controlled Comparison Notice**: The central controlled comparison is **Model C vs Model B**. Both share the identical XGBoost model family, hyperparameters, and temporal features, isolating the incremental contribution of the causal 24-hour relational graph. Model A serves as the initial baseline floor.
+
+Thresholds are selected **strictly on the validation set** to minimize expected financial cost under the operational constraint $\text{Recall} \ge 0.80$, then frozen for evaluation on the held-out test set.
+
+---
+
+## 8. Final Model Comparison
+
+### Initial P0 Baseline (Model A)
+- **Model A — Logistic Regression + temporal features** (Held-Out Test Set, Seed 42):
+  - Validation PR-AUC: `0.9495` | Frozen Validation Threshold: `0.2407`
+  - Held-out PR-AUC: `0.9587`
+  - Held-out Precision: `48.35%` (0.4835)
+  - Held-out Recall: `96.88%` (0.9688)
+  - Held-out F1 Score: `0.6451`
+  - Held-out FPR: `8.22%` (0.0822)
+  - Expected Cost: `28,280`
+  - Confusion Matrix: `TN=12,583, FP=1,128, FN=34, TP=1,056`
+
+### Controlled Evaluation: Model C vs. Model B (3-Seed Mean)
 Across the 3-seed evaluation audit on the held-out test set (14,801 samples):
 
-| Evaluation Metric | Model C (Temporal Only) | Model B (Temporal + Graph) | Delta (C $\to$ B) | Operational Implication |
-| :--- | :---: | :---: | :---: | :--- |
-| **PR-AUC (Mean)** | **0.9550** | **0.9568** | **+0.0018 (Mean)** | Incremental ranking improvement (2 of 3 seeds positive) |
-| **Precision (Mean)** | **65.08%** | **68.65%** | **+3.57% (Mean)** | Higher precision on flagged accounts |
-| **Recall (Mean)** | **95.32%** | **95.15%** | **-0.17% (Mean)** | Comparable high coverage on abuse |
-| **F1 Score (Mean)** | **0.7731** | **0.7972** | **+0.0241 (Mean)** | Harmonic precision/recall balance |
-| **FPR (Mean)** | **6.47%** | **5.59%** | **-0.88% (Mean)** | Overall suppression of false positive noise |
-| **Expected Cost** | **32,017** | **31,810** | **-207 (Mean)** | High seed variance (range: -2,300 to +1,930) |
+| Evaluation Metric | Model A (LR Baseline Floor) | Model C (XGBoost Temporal Control) | Model B (XGBoost Temporal + Graph) | Delta (C $\to$ B) | Operational Implication |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **PR-AUC (Mean)** | 0.9587* | **0.9550** | **0.9568** | **+0.0018 (Mean)** | Incremental ranking improvement (2 of 3 seeds positive) |
+| **Precision (Mean)** | 48.35%* | **65.08%** | **68.65%** | **+3.57% (Mean)** | Higher precision on flagged accounts |
+| **Recall (Mean)** | 96.88%* | **95.32%** | **95.15%** | **-0.17% (Mean)** | Comparable high coverage on abuse |
+| **F1 Score (Mean)** | 0.6451* | **0.7731** | **0.7972** | **+0.0241 (Mean)** | Harmonic precision/recall balance |
+| **FPR (Mean)** | 8.22%* | **6.47%** | **5.59%** | **-0.88% (Mean)** | Overall suppression of false positive noise |
+| **Expected Cost** | 28,280* | **32,017** | **31,810** | **-207 (Mean)** | High seed variance (range: -2,300 to +1,930) |
 
-*Disclosure on Operational Cost*: Expected cost is evaluated at each model's validation-selected operating point and shows high seed-to-seed variance (cost delta range: -2,300 to +1,930). The -207 mean cost delta is not a robust standalone headline; the more robust scenario-level result is the 51.9% relative reduction in seasonal-burst false-positive rate.
+*\*Model A values reflect the single-seed P0 baseline floor.*
+
+> **Disclosure on Operational Cost**: Expected cost is evaluated at each model's validation-selected operating point and shows high seed-to-seed variance (cost delta range: -2,300 to +1,930). The -207 mean cost delta is not a robust standalone headline; the more robust scenario-level result is the 51.9% relative reduction in seasonal-burst false-positive rate.
 
 ---
 
@@ -142,7 +182,7 @@ To confirm results are not artifacts of a single favorable random seed, the iden
 | **Seed 999** | 0.9559 | 0.9526 | **-0.0033** | **+0.0730** | **+1,930** |
 | **Mean** | **0.9550** | **0.9568** | **+0.0018** | **+0.0357** | **-207** |
 
-> **Seed-Variance Disclosure**: Expected cost is evaluated at each model's validation-selected operating point and shows high seed-to-seed variance (cost delta range: -2,300 to +1,930). The more robust scenario-level result is the reduction in seasonal-burst false-positive rate.
+> **Seed-Variance Disclosure**: Expected cost is evaluated at each model's validation-selected operating point and shows high seed-to-seed variance (cost delta range: -2,300 to +1,930). The strongest repeatable scenario-level result is the reduction in seasonal-burst false-positive rate.
 > 
 > *Scientific Integrity Note*: Seed 999 demonstrates transparent reporting. In Seed 999, graph PR-AUC experienced a minor dip (-0.0033) and expected cost increased (+1,930), while precision gained +7.30%. On aggregate, graph integration delivers positive directional stability, with seasonal-burst false-positive reduction consistent across all 3 seeds.
 
@@ -175,12 +215,15 @@ Analyzing scenario-level behavior reveals where the graph delivers decisive valu
 
 ---
 
-## 12. Setup Commands
-Requires Python 3.10+ (tested on Python 3.14 on Windows):
+## 12. Setup & Reproduction Commands
+
+### Environment Requirements
+- **Tested & Verified Runtime Environment**: **Python 3.14.7** on Windows.
+- Compatibility with older Python versions (3.10–3.13) has not been verified in this audit cycle.
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/razorpay/abuse-ring-sentinel.git
+git clone https://github.com/Dr-Dre420/abuse-ring-sentinel.git
 cd abuse-ring-sentinel
 
 # 2. Create virtual environment and activate
@@ -188,7 +231,7 @@ python -m venv venv
 .\venv\Scripts\activate      # Windows
 # source venv/bin/activate   # Linux/macOS
 
-# 3. Install frozen dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
 
 # 4. Run automated test suite (20 tests passing)
@@ -223,6 +266,7 @@ curl http://localhost:8000/health
   "status": "healthy",
   "service": "abuse-ring-sentinel",
   "version": "1.0.0",
+  "methodology": "frozen_p1_7",
   "models": {"model_B": "XGBoost + Temporal + Graph", "model_C": "XGBoost + Temporal Only"}
 }
 ```
@@ -288,3 +332,35 @@ curl -X POST http://localhost:8000/score/batch \
   - Explain why temporal features dominate (~81% importance) and why claiming "graph-centric" would be dishonest.
   - Explain how the zero-second lookahead bug was identified and resolved.
   - Emphasize that all defensive recommendations are strictly reversible with human-in-the-loop auditability.
+
+---
+
+## 16. Repository Structure
+```
+abuse-ring-sentinel/
+├── README.md                      # Comprehensive submission documentation
+├── LICENSE                        # MIT License
+├── .env.example                   # Environment configuration template
+├── .gitignore                     # Git hygiene rules
+├── requirements.txt               # Pinned Python package dependencies
+├── src/
+│   ├── api.py                     # FastAPI service & evaluation endpoints
+│   ├── cases.py                   # Case telemetry, timeline & explanation logic
+│   ├── data.py                    # Multi-scenario synthetic transaction generator
+│   ├── features.py                # Causal 24h bipartite graph feature extractor
+│   ├── evaluate.py                # Multi-seed audit & evaluation suite
+│   ├── train.py                   # Model training & threshold selection
+│   └── static/
+│       ├── index.html             # Risk Operations Console
+│       ├── styles.css             # Dark slate visual design system
+│       └── app.js                 # Interactive dashboard logic & settling canvas
+├── tests/
+│   ├── test_graph.py              # Zero-leakage temporal regression tests
+│   ├── test_p2_dashboard_api.py   # API contracts, Case C values & safety tests
+│   └── test_smoke.py              # Core endpoint smoke tests
+└── assets/
+    └── screenshots/               # Dashboard screenshots for public repository
+        ├── case_a_investigation.png
+        ├── case_c_disagreement.png
+        └── model_evaluation.png
+```
