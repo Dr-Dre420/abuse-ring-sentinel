@@ -13,45 +13,71 @@
 </head>
 <body>
 
-  <!-- Top Application Navigation Bar -->
-  <header class="app-header">
-    <div class="header-container">
-      <div class="brand">
-        <div class="brand-badge-row">
-          <span class="brand-badge">DEFENSE-ONLY RISK INTELLIGENCE</span>
-          <span class="system-status-indicator"><span class="status-dot"></span> OPERATIONAL</span>
+  <!-- Decorative Aurora Backdrop (non-interactive) -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="aurora-blob aurora-blob-1"></div>
+    <div class="aurora-blob aurora-blob-2"></div>
+    <div class="aurora-blob aurora-blob-3"></div>
+    <div class="aurora-grid"></div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- Left Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 2 3 6.5v6C3 17.4 6.9 21.4 12 22c5.1-.6 9-4.6 9-9.5v-6L12 2Z"></path><path d="m9 12 2 2 4-4"></path></svg>
         </div>
-        <div class="brand-title-row">
-          <h1 class="brand-title">Abuse-Ring Sentinel</h1>
-          <span class="engine-badge">Temporal + 24h Causal Graph</span>
+        <div class="brand-text">
+          <span class="brand-title">Abuse-Ring Sentinel</span>
+          <span class="brand-badge">DEFENSE-ONLY INTEL</span>
         </div>
       </div>
 
-      <nav class="nav-tabs">
-        <div class="nav-primary-group">
-          <button class="tab-btn active" id="tab-btn-cases" onclick="switchTab('cases')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-            Cases
-          </button>
-          <button class="tab-btn" id="tab-btn-investigate" onclick="switchTab('investigate')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <span id="nav-active-case-label">Investigate</span>
-          </button>
-        </div>
+      <nav class="sidebar-nav">
+        <span class="nav-section-label">Workspace</span>
+        <button class="tab-btn active" id="tab-btn-cases" onclick="switchTab('cases')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span id="nav-active-case-label-cases">Cases</span>
+        </button>
+        <button class="tab-btn" id="tab-btn-investigate" onclick="switchTab('investigate')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span id="nav-active-case-label">Investigate</span>
+        </button>
+
         <div class="nav-divider"></div>
+        <span class="nav-section-label">Analysis</span>
         <button class="tab-btn tab-btn-secondary" id="tab-btn-evaluation" onclick="switchTab('evaluation')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-          Model Evaluation
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span>Model Evaluation</span>
         </button>
       </nav>
-    </div>
-  </header>
 
-  <!-- Notification Toast Banner -->
-  <div id="toast-banner" class="toast-banner hidden"></div>
+      <div class="sidebar-footer">
+        <span class="system-status-indicator"><span class="status-dot"></span> <span>OPERATIONAL</span></span>
+        <span class="engine-badge"><span>Temporal + 24h Causal Graph</span></span>
+        <p class="sidebar-safety-note">No automated financial action. Every disposition awaits human authorization.</p>
+      </div>
+    </aside>
 
-  <!-- MAIN VIEWPORT CONTAINER -->
-  <main class="main-container">
+    <div class="app-main">
+
+      <!-- Slim Context Topbar -->
+      <div class="topbar">
+        <div class="topbar-inner">
+          <div>
+            <span class="topbar-eyebrow">DEFENSE-ONLY RISK INTELLIGENCE</span>
+            <div class="topbar-title" id="topbar-title">Cases Overview</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notification Toast Banner -->
+      <div id="toast-banner" class="toast-banner hidden"></div>
+
+      <!-- MAIN VIEWPORT CONTAINER -->
+      <main class="main-container">
 
     <!-- ========================================================================= -->
     <!-- VIEW 1: CASES LANDING OVERVIEW                                            -->
@@ -574,8 +600,10 @@
             <!-- Left: Recommended Action & Policy Statement -->
             <div class="action-recommendation-col">
               <div class="card-header-clean">
-                <span class="section-label">DEFENSIVE RISK POLICY</span>
-                <h3 class="card-title">Recommended Action</h3>
+                <div>
+                  <span class="section-label">DEFENSIVE RISK POLICY</span>
+                  <h3 class="card-title">Recommended Action</h3>
+                </div>
               </div>
 
               <div class="rec-badge-wrapper">
@@ -959,7 +987,11 @@
 
     </section>
 
-  </main>
+      </main>
+    </div>
+    <!-- /app-main -->
+  </div>
+  <!-- /app-shell -->
 
   <!-- Application Logic -->
   <script src="/static/app.js"></script>
