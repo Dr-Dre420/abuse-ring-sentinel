@@ -13,6 +13,12 @@ let is3DAutoRotating = false;
 // TAB & NAVIGATION MANAGEMENT
 // -----------------------------------------------------------------------------
 
+const TOPBAR_TITLES = {
+  cases: "Cases Overview",
+  investigate: "Investigation Workspace",
+  evaluation: "Model Evaluation & Audit"
+};
+
 function switchTab(tabName) {
   activeTab = tabName;
 
@@ -20,6 +26,9 @@ function switchTab(tabName) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   const activeBtn = document.getElementById(`tab-btn-${tabName}`);
   if (activeBtn) activeBtn.classList.add('active');
+
+  const topbarTitle = document.getElementById('topbar-title');
+  if (topbarTitle) topbarTitle.innerText = TOPBAR_TITLES[tabName] || "Abuse-Ring Sentinel";
 
   // Toggle View Sections
   document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
